@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
 <%@ taglib uri="http://localhost/jeetags" prefix="siga"%>
 <%@ taglib uri="http://localhost/libstag" prefix="f"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix = "fn" %>
@@ -9,107 +10,89 @@
 	incluirJs="/siga/javascript/jquery.placeholder.js">
 
 	<script type="text/javascript">
-		/*  converte para maiúscula a sigla do estado  */
+		/*  converte para maiï¿ºscula a sigla do estado  */
 		function converteUsuario(nomeusuario) {
-			re = /^[a-zA-Z]{2}\d{3,6}$/;
-			ret2 = /^[a-zA-Z]{1}\d{3,6}$/;
 			tmp = nomeusuario.value;
-			if (tmp.match(re) || tmp.match(ret2)) {
 				nomeusuario.value = tmp.toUpperCase();
 			}
-		}
 	</script>
 
-	<div class="gt-bd gt-cols clearfix">
 
-		<!-- main content -->
-		<div id="gc-ancora" class="gt-content">
 			<c:choose>
-				<c:when test="${f:resource('siga.gc.paginadelogin')}">
-					<c:url var="url" value="/../sigagc/publicKnowledge">
-						<c:param name="tags">^pagina-de-login</c:param>
-						<c:param name="estilo">inplace</c:param>
-						<c:param name="msgvazio">Ainda não existem informações para serem exibidas aqui. Por favor, clique <a
-								href="$1">aqui</a> para contribuir.</c:param>
-						<c:param name="titulo">Página de Login</c:param>
-						<c:param name="ts">${currentTimeMillis}</c:param>
-					</c:url>
-					<script type="text/javascript">
-						SetInnerHTMLFromAjaxResponse("${url}", document.getElementById('gc-ancora'));
-					</script>
+	<c:when test="${siga_cliente == 'GOVSP'}">
+		<c:set var="login_box_class" value="box_login" />
+		<c:set var="login_box_logo" value="/siga/imagens/logo-sem-papel-cor.png" />
+		<c:set var="login_box_logo_size" value="150" />
+		<c:set var="login_box_text" value="" />
 				</c:when>
-				<c:when test="${not empty f:resource('siga.cabecalho.titulo') && fn:contains(f:resource('siga.cabecalho.titulo'), 'Governo do Estado de São Paulo')}">
-					<c:import url="comentarioSP.jsp" />
-				</c:when>
-                
 				<c:when test="${not empty f:resource('siga.cabecalho.titulo') && fn:contains(f:resource('siga.cabecalho.titulo'), 'INFRAERO')}">
 					<c:import url="comentarioINFRAERO.jsp" />
 				</c:when>
                 
 				<c:otherwise>
-					<c:import url="comentario.jsp" />
+		<c:set var="login_box_class" value="" />
+		<c:set var="login_box_logo" value="" />
+		<c:set var="login_box_logo_size" value="" />
+		<c:set var="login_box_text" value="<fmt:message key='usuario.login.formulario' />" />
 				</c:otherwise>
 			</c:choose>
-			<h4>Versão: ${versao}</h4>
+
+	<div class="container content pt-2">
+		<div class="row justify-content-center">
+			<div class="col col-sm-12 col-md-5">
+				<div class="jumbotron d-block mx-auto ${login_box_class}">
+
+					<div class="text-center">
+						<img alt="" src="${login_box_logo}" width="${login_box_logo_size}" align="center"/>
 		</div>
-		<!-- / main content -->
 
-		<!-- sidebar -->
-		<div class="gt-sidebar">
-			<!-- login form head -->
-			<div class="gt-mylogin-hd">Identificação</div>
+					<h2 class="text-center pb-1 pt-2">${login_box_text}</h2>
 
-			<!-- login box -->
-			<div class="gt-mylogin-box">
-				<!-- login form -->
-				<form method="post" enctype="application/x-www-form-urlencoded"
-					class="gt-form">
-
-					<c:if test="${not empty mensagem}">
+					<c:if test="${not empty loginMensagem}">
 						<div class="login-invalido">
-							<div class="login-invalido-titulo">
-								<p>${mensagem}</p>
+							<div class="login-invalido-titulo ${hide_only_GOVSP}">
+								<p class="alert alert-danger ">${loginMensagem}</p>
 							</div>
 
 							<div class="login-invalido-descricao">
-								${f:resource('siga.gi.texto.login')}
+								<div class="${hide_only_GOVSP}">
+									<p class="alert alert-danger">${f:resource('siga.gi.texto.login')}</p>
 							</div>
+								<p class="alert alert-danger ${hide_only_TRF2}">${loginMensagem}</p>
+						</div>
 						</div>
 					</c:if>
 
-					<!-- form row -->
-					<div class="gt-form-row">
-						<label class="gt-label">Matrícula</label> <input id="username"
-							type="text" name="username" placeholder="XX99999"
-							onblur="javascript:converteUsuario(this)" class="gt-form-text">
-					</div>
-					<!-- /form row -->
+					<!---->
+					<form role="form" method="post"
+						enctype="application/x-www-form-urlencoded">
+						<div class="form-group">
+							<label for="username"><fmt:message key="usuario.matricula"/></label> 
 
-					<!-- form row -->
-					<div class="gt-form-row">
-						<label class="gt-label">Senha</label> <input type="password"
-							name="password" class="gt-form-text">
+						    <div class="input-group">
+						      <div class="input-group-prepend">
+						        <span class="input-group-text" id="icon-user"><i class="fas fa-user"></i></span>
 					</div>
-					<!-- /form row -->
+						      <input id="username" type="text" name="username" placeholder="<fmt:message key="usuario.digite.usuario"/>" onblur="javascript:converteUsuario(this)" autocorrect="off"
+								autocapitalize="none" class="form-control" aria-label="Usuário" aria-describedby="icon-user">
+						    </div>
 
-					<!-- form row -->
-					<div class="gt-form-row">
-						<input type="submit" value="Acessar"
-							class="gt-btn-medium gt-btn-right">
 					</div>
-					<!-- /form row -->
+						<div class="form-group">
+							<label for="password">Senha</label>
+							<div class="input-group">
+						      <div class="input-group-prepend">
+						        <span class="input-group-text" id="icon-pass"><i class="fas fa-lock"></i></span>
+						      </div>
+						      <input type="password" name="password" id="password" placeholder="Senha"
+								class="form-control" aria-label="Usuário" aria-describedby="icon-pass">
+						    </div>
 
-					<p class="gt-forgot-password">
-						<a href="/siga/public/app/usuario/incluir_usuario">Sou um novo
-							usuário</a>
-					</p>
-					<p class="gt-forgot-password">
-						<a href="/siga/public/app/usuario/esqueci_senha">Esqueci minha senha</a>
-					</p>
-				</form>
-				<!-- /login form -->
 			</div>
-			<!-- /login box -->
+						<div class="row pt-3">
+							<div class="col">
+								<div class="text-center">
+									<button type="submit" class="btn btn-lg btn-primary btn-block"><i class="fas fa-sign-in-alt"></i> Entrar</button>
 
 			<!-- Sidebar Navigation -->
 			<c:if test="${not empty f:resource('siga.cabecalho.titulo') && !fn:contains(f:resource('siga.cabecalho.titulo'), 'Governo do Estado de São Paulo')}">
@@ -122,14 +105,39 @@
 								SIGA-Workflow</a></li>--%>
 					</ul>
 				</div>
+									<c:if test="${siga_cliente ne 'GOVSP'}">
+										<div class="mt-3">
+										    <div class="d-flex justify-content-between">
+										    	   	<div>
+										    		Versão: ${versao}
+										    	    </div>
+										    	    <div>
+										    		<a class="text-top" href="http://linksiga.trf2.jus.br" target="_blank" class="btn btn-link">Sobre o SIGA</a> 
+										    	    </div>
+										    </div>
+										</div>
+										<div class="mt-3 text-left" id="isChrome">
+											<p style="color:red"><b>*</b>  Utilize o navegador Google Chrome.</p>	
+										</div>
 			</c:if>
-			<!-- /Sidebar Navigation -->
-			<!-- Sidebar Content -->
 		</div>
-		<!-- / sidebar -->
+	</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
 	</div>
 	<script type="text/javascript">
-		$('input, textarea').placeholder();
+	
+	    var x = document.getElementById("isChrome");
+	    if (!!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime)) {
+	       x.style.display = "none";
+	    } else {
+	       x.style.display = "block";
+	    }
+		
+		//$('input, textarea').placeholder();
 		$("#username").focus();
 
 		function getCookie(cname) {
@@ -145,4 +153,5 @@
 			return "";
 		}
 	</script>
+	<script src="../../javascript/service-worker.js" async></script>
 </siga:pagina>
