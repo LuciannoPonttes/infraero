@@ -144,15 +144,12 @@ public class GiServiceImpl implements GiService {
 					}
 				}
 			} else {
-
-				final String hashAtual = GeraMessageDigest.executaHash(senha.getBytes(), "MD5");
-
 				DpPessoaDaoFiltro flt = new DpPessoaDaoFiltro();
 				flt.setSigla(matricula);
 
 				// DpPessoa p = (DpPessoa) dao.consultarPorSigla(flt);
 				id = dao.consultaIdentidadeCadastrante(matricula, true);
-				if (id != null && !id.getDscSenhaIdentidade().equals(hashAtual))
+				if (!autenticaViaBanco(id, senha))
 					id = null;
 			}
 			if (id != null) {
