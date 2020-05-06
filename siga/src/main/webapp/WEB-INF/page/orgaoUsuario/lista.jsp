@@ -56,10 +56,10 @@ function sbmt(offset) {
 							itens="${itens}" var="orgaoUsuario">
 
 							<tr>
-								<td class="text-left w-10">${orgaoUsuario[0].id}</td>
-								<td class="text-left w-60">${orgaoUsuario[0].descricao}</td>
-								<td class="text-center w-10">${orgaoUsuario[0].sigla}</td>
-								<td class="text-center w-10">${orgaoUsuario[0].isExternoOrgaoUsu  == 1 ? 'SIM' : 'NÃO'}</td>
+								<td class="text-left w-10">${orgaoUsuario.id}</td>
+								<td class="text-left w-60">${orgaoUsuario.descricao}</td>
+								<td class="text-center w-10">${orgaoUsuario.sigla}</td>
+								<td class="text-center w-10">${orgaoUsuario.isExternoOrgaoUsu  == 1 ? 'SIM' : 'NÃO'}</td>
 								<td class="text-left w-10">
 									<c:url var="url" value="/app/orgaoUsuario/editar">
 										<c:param name="id" value="${orgaoUsuario.id}"></c:param>

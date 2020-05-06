@@ -311,7 +311,7 @@ public class SubstituicaoController extends SigaController {
 				subst.setIdRegistroInicial(subst.getIdSubstituicao());
 
 			subst = dao().gravar(subst);
-			
+			/*
 			Set<DpPessoa> pessoasParaEnviarEmail = new HashSet<DpPessoa>();
 			
 			String textoEmail = "Informamos que a matrícula: "  + getCadastrante().getSesbPessoa() + getCadastrante().getMatricula()
@@ -351,7 +351,7 @@ public class SubstituicaoController extends SigaController {
 			}
 			
 			Correio.enviar(listaDeEmails.toArray(new String[listaDeEmails.size()]),assunto, textoEmail);
-			
+			*/
 			result.redirectTo(this).lista();
 
 			dao().commitTransacao();

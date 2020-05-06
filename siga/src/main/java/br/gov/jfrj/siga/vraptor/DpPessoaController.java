@@ -570,7 +570,8 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 			if(pessoa.getIdPessoaIni() == null && pessoa.getId() != null) {
 				pessoa.setIdPessoaIni(pessoa.getId());
 				pessoa.setIdePessoa(pessoa.getId().toString());
-				pessoa.setMatricula(10000 + pessoa.getId());
+				String cpfString = pessoa.getCpfPessoa().toString();
+				pessoa.setMatricula(Long.getLong(cpfString.substring(0, cpfString.length()-2)));
 				pessoa.setIdePessoa(pessoa.getMatricula().toString());
 				dao().gravar(pessoa);
 				

@@ -137,7 +137,10 @@ import br.gov.jfrj.siga.sinc.lib.Desconsiderar;
 				+ "   and (u.dtCancelamentoIdentidade is null)"
 				+ "   and (u.dtExpiracaoIdentidade is null or u.dtExpiracaoIdentidade > current_date())"
 				+ "   and (pes.dataFimPessoa is null)"
-				+ "   and (pes.situacaoFuncionalPessoa in ('1', '2', '31'))")
+				+ "   and (pes.situacaoFuncionalPessoa in ('1', '2', '31'))"),
+		@NamedQuery(name = "consultarDpPessoaPorLoginAD", query = "select pes from DpPessoa pes where pes.siglaPessoa = :login and pes.dataFimPessoa = null"),
+		@NamedQuery(name = "consultarPorMatriculaUnicaDpPessoa", query = "select pes from DpPessoa pes where pes.matricula = :matricula and pes.dataFimPessoa = null"),
+
 })
 public abstract class AbstractDpPessoa extends DpResponsavel implements
 		Serializable {
