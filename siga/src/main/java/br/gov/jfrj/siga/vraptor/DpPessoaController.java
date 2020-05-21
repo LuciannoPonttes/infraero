@@ -57,6 +57,7 @@ import br.gov.jfrj.siga.cp.bl.CpBL;
 import br.gov.jfrj.siga.cp.bl.SituacaoFuncionalEnum;
 import br.gov.jfrj.siga.cp.model.DpLotacaoSelecao;
 import br.gov.jfrj.siga.dp.CpOrgaoUsuario;
+import br.gov.jfrj.siga.dp.CpTipoPessoa;
 import br.gov.jfrj.siga.dp.DpCargo;
 import br.gov.jfrj.siga.dp.DpFuncaoConfianca;
 import br.gov.jfrj.siga.dp.DpLotacao;
@@ -328,6 +329,9 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 				if(pessoa.getLotacao() != null) {
 					result.include("idLotacao", pessoa.getLotacao().getId());
 				}
+				if(pessoa.getCpTipoPessoa() != null) {
+					result.include("idTpPessoa", pessoa.getCpTipoPessoa().getIdTpPessoa());
+				}
 			}
 		}
 		if(id == null || (ou.getId() != null && ("ZZ".equals(getTitular().getOrgaoUsuario().getSigla()) || CpDao.getInstance().consultarPorSigla(getTitular().getOrgaoUsuario()).getId().equals(ou.getId())))) {
@@ -368,6 +372,14 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 				listaFuncao.add(f);
 				listaFuncao.addAll(dao().getInstance().consultarPorFiltro(funcao));
 				result.include("listaFuncao", listaFuncao);
+				
+				List<CpTipoPessoa> listaTipoPessoa = new ArrayList<CpTipoPessoa>();
+				CpTipoPessoa tp = new CpTipoPessoa();
+				tp.setDscTpPessoa("Selecione");
+				tp.setIdTpPessoa(0);
+				listaTipoPessoa.add(tp);
+				listaTipoPessoa.addAll(dao().getInstance().listarTiposPessoa());
+				result.include("listaTipoPessoa", listaTipoPessoa);
 				
 				result.include("request",getRequest());
 				result.include("id",id);
@@ -471,7 +483,7 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 	
 	@Post("/app/pessoa/gravar")
 	public void editarGravar(final Long id, final Long idOrgaoUsu, final Long idCargo, final Long idFuncao, final Long idLotacao, final String nmPessoa, final String dtNascimento, 
-			final String cpf, final String email) throws Exception{
+			final String cpf, final String email, final Integer idTipoPessoa) throws Exception{
 		assertAcesso("GI:Módulo de Gestão de Identidade;CAD_PESSOA:Cadastrar Pessoa");
 		
 		if(idOrgaoUsu == null || idOrgaoUsu == 0)
@@ -491,6 +503,9 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 		
 		if(email == null || email.trim() == "") 
 			throw new AplicacaoException("E-mail não informado");
+		
+		if(idTipoPessoa == null || idTipoPessoa == 0)
+			throw new AplicacaoException("Tipo de pessoa não informado");
 		
 		if(nmPessoa != null && !nmPessoa.matches("[a-zA-ZáâãéêíóôõúçÁÂÃÉÊÍÓÔÕÚÇ'' ]+")) 
 			throw new AplicacaoException("Nome com caracteres não permitidos");
@@ -530,12 +545,14 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 		DpCargo cargo = new DpCargo();
 		DpFuncaoConfianca funcao = new DpFuncaoConfianca();
 		DpLotacao lotacao = new DpLotacao();
+		CpTipoPessoa tipoPessoa = new CpTipoPessoa();
 		
 		ou.setIdOrgaoUsu(idOrgaoUsu);
 		ou = CpDao.getInstance().consultarPorId(ou);
 		cargo.setId(idCargo);
 		lotacao.setId(idLotacao);
 		funcao.setIdFuncao(idFuncao);
+		tipoPessoa.setIdTpPessoa(idTipoPessoa);
 		
 		pessoa.setOrgaoUsuario(ou);
 		pessoa.setCargo(cargo);
@@ -545,6 +562,7 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 		} else {
 			pessoa.setFuncaoConfianca(null);
 		}
+		pessoa.setCpTipoPessoa(tipoPessoa);
 		pessoa.setSesbPessoa(ou.getSigla());
 		
 		//ÓRGÃO / CARGO / FUNÇÃO DE CONFIANÇA / LOTAÇÃO e CPF iguais.
@@ -571,7 +589,7 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 				pessoa.setIdPessoaIni(pessoa.getId());
 				pessoa.setIdePessoa(pessoa.getId().toString());
 				String cpfString = pessoa.getCpfPessoa().toString();
-				pessoa.setMatricula(Long.getLong(cpfString.substring(0, cpfString.length()-2)));
+				pessoa.setMatricula(Long.parseLong(cpfString.substring(0, cpfString.length()-2)));
 				pessoa.setIdePessoa(pessoa.getMatricula().toString());
 				dao().gravar(pessoa);
 				

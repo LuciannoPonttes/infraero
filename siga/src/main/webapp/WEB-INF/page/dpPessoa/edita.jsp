@@ -13,6 +13,7 @@
 		var dtNascimento = document.getElementsByName('dtNascimento')[0].value;
 		var cpf = document.getElementsByName('cpf')[0].value;
 		var email = document.getElementsByName('email')[0].value;
+		var tipoPessoa = document.getElementsByName('idTipoPessoa')[0].value;
 		var id = document.getElementsByName('id')[0].value;	
 		if (nmPessoa==null || nmPessoa=="") {			
 			mensagemAlerta("Preencha o nome da pessoa.");
@@ -51,6 +52,12 @@
 		}
 
 		if(!validarEmail(document.getElementsByName('email')[0])) {
+			return;
+		}
+
+		if(tipoPessoa==null || tipoPessoa == 0){
+			mensagemAlerta("Preencha o tipo da pessoa.");
+			document.getElementById('tipoPessoa').focus();
 			return;
 		}
 
@@ -232,6 +239,20 @@
 						<div class="form-group">
 							<label for="nmPessoa">E-mail</label>
 							<input type="text" id="email" name="email" value="${email}" maxlength="60" onchange="validarEmail(this)" onkeyup="this.value = this.value.toLowerCase().trim()" class="form-control" />
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-sm-2">
+						<div class="form-group">
+							<label for="idTipoPessoa">Tipo</label>
+							<select name="idTipoPessoa" value="${idTpPessoa}" class="form-control">
+								<c:forEach items="${listaTipoPessoa}" var="item">
+									<option value="${item.idTpPessoa}"
+										${item.idTpPessoa == idTpPessoa ? 'selected' : ''}>
+										${item.dscTpPessoa}</option>
+								</c:forEach>
+							</select>
 						</div>
 					</div>
 				</div>
