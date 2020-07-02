@@ -1210,7 +1210,7 @@ public class ExCompetenciaBL extends CpCompetenciaBL {
 	public boolean podeAutenticarDocumento(final DpPessoa titular,
 			final DpLotacao lotaTitular, final ExDocumento doc) {
 		
-		if (doc.isEletronico() || !doc.getAutenticacoesComTokenOuSenha().isEmpty())
+		if (!doc.isEletronico() || !doc.getAutenticacoesComTokenOuSenha().isEmpty())
 			return false;
 		
 		return doc.isExternoCapturado() || doc.isInternoCapturado() || doc.getAssinaturasComSenha().size() > 0;
