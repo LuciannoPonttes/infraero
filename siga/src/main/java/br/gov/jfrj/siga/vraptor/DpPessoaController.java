@@ -472,6 +472,14 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 		listaFuncao.addAll(dao().getInstance().consultarPorFiltro(funcao));
 		result.include("listaFuncao", listaFuncao);
 		
+		List<CpTipoPessoa> listaTipoPessoa = new ArrayList<CpTipoPessoa>();
+		CpTipoPessoa tp = new CpTipoPessoa();
+		tp.setDscTpPessoa("Selecione");
+		tp.setIdTpPessoa(0);
+		listaTipoPessoa.add(tp);
+		listaTipoPessoa.addAll(dao().getInstance().listarTiposPessoa());
+		result.include("listaTipoPessoa", listaTipoPessoa);
+		
 		if(paramoffset == null) {
 			result.use(Results.page()).forwardTo("/WEB-INF/page/dpPessoa/edita.jsp");
 		} else if(retornarEnvioEmail != null && retornarEnvioEmail) { 
