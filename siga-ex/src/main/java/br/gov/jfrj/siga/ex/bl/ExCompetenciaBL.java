@@ -4438,6 +4438,21 @@ public class ExCompetenciaBL extends CpCompetenciaBL {
 						ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA,
 						CpTipoConfiguracao.TIPO_CONFIG_MOVIMENTAR);
 	}
+
+	public boolean podeTransferirPen(final DpPessoa titular,
+								  final DpLotacao lotaTitular, final ExMobil mob) {
+
+		if(!podeSerTransferido(mob))
+			return false;
+
+		if((mob.getExDocumento().getExFormaDocumento().getCodEspeciePen() == null || mob.getExDocumento().getExFormaDocumento().getCodEspeciePen().isEmpty()) && !mob.getDoc().isProcesso())
+			return false;
+
+		return podeMovimentar(titular, lotaTitular, mob)
+				&& getConf().podePorConfiguracao(titular, lotaTitular,
+				ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA,
+				CpTipoConfiguracao.TIPO_CONFIG_MOVIMENTAR);
+	}
 	
 	public boolean podeSerTransferido(final ExMobil mob) {
 		if (mob.isPendenteDeAnexacao())

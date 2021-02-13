@@ -405,6 +405,13 @@ public class ExMobilVO extends ExVO {
 				"transferir",
 				Ex.getInstance().getComp()
 						.podeTransferir(titular, lotaTitular, mob));
+
+		addAcao("email_go",
+				"Enviar PEN",
+				"/app/expediente/mov",
+				"enviar_pen",
+				Ex.getInstance().getComp()
+						.podeTransferirPen(titular, lotaTitular, mob));
 		
 		addAcao(AcaoVO.builder().nome("_Anotar").icone("note_add").acao("/app/expediente/mov/anotar")
 				.params("sigla", mob.getCodigoCompacto()).exp(new ExPodeAnotar(mob, titular, lotaTitular)).build());

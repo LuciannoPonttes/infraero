@@ -81,6 +81,10 @@ public abstract class AbstractExFormaDocumento extends Objeto implements
 	@Column(name = "IS_COMPOSTO", length = 1)
 	private Integer isComposto;
 
+	@Column(name = "COD_ESPECIE_PEN", length = 20)
+	private String codEspeciePen;
+
+
 	/**
 	 * Simple constructor of AbstractExFormaDocumento instances.
 	 */
@@ -213,6 +217,14 @@ public abstract class AbstractExFormaDocumento extends Objeto implements
 
 	public void setExTipoFormaDoc(ExTipoFormaDoc exTipoFormaDoc) {
 		this.exTipoFormaDoc = exTipoFormaDoc;
+	}
+
+	public String getCodEspeciePen() {
+		return codEspeciePen;
+	}
+
+	public void setCodEspeciePen(String codEspeciePen) {
+		this.codEspeciePen = codEspeciePen;
 	}
 
 	public void setIsComposto(final java.lang.Integer isComposto) {
