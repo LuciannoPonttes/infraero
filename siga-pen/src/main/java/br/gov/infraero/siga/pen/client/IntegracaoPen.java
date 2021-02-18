@@ -1,5 +1,7 @@
 package br.gov.infraero.siga.pen.client;
 
+import br.gov.infraero.siga.pen.client.util.PenProperties;
+
 import javax.activation.DataHandler;
 import javax.mail.util.ByteArrayDataSource;
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -19,44 +21,33 @@ import java.util.List;
 
 public class IntegracaoPen {
 
-
     /**
      * Alias do par de chaves dentro
      * do KeyStore JKS.
      */
-    private static final String KEY_ALIAS = "key-alias";
+    private static final String KEY_ALIAS = PenProperties.getValue("pen.key_alias");
 
     /**
      * Caminho do WSDL do ambiente desejado.
      */
-    //private static final String WSDL_PATH = "https://homolog.api.processoeletronico.gov.br/interoperabilidade/soap/v1_1/?wsdl";
-    private static final String WSDL_PATH = "https://homolog.api.processoeletronico.gov.br/interoperabilidade/soap/v2/?wsdl";
-
-
-
+    private static final String WSDL_PATH = PenProperties.getValue("pen.wsdl_path");
 
     /**
-     * Senha do keystore que cont�m o par
+     * Senha do keystore que contem o par
      * de chaves autorizado a acessar o ambiente.
      */
-    //private static final String KEYSTORE_PASSWORD = "changeit";
-    private static final String KEYSTORE_PASSWORD = "6zj0AB8nwsLoQyrZ";
+    private static final String KEYSTORE_PASSWORD = PenProperties.getValue("pen.keystore_password");
 
     /**
      * Caminho onde se encontra o keystore JKS
-     * que cont�m o par de chaves autorizado
+     * que contem o par de chaves autorizado
      * a acessar o ambiente.
      */
-    //private static final String KEYSTORE_PATH = "caminho/absoluto/para/keystore.p12";
-    private static final String KEYSTORE_PATH = "/Users/tiagomeneses/Downloads/certificado/EmpresaBrasileiradeInfraestruturaAeroporturia.p12";
+    private static final String KEYSTORE_PATH = PenProperties.getValue("pen.keystore_path");
 
+    private static final String PEN_SERVICE_QNAME = PenProperties.getValue("pen.service.qname");
+    private static final String PEN_SERVICE_NAME = PenProperties.getValue("pen.service.name");
 
-
-    /**
-     * Caminho onde se encontra o truststore JKS
-     * que cont�m o certificado do servidor.
-     */
-    private static final String TRUSTSTORE_PATH = "caminho/absoluto/para/truststore.jks";
 
     private InteroperabilidadePEN interoperabilidadePEN;
 
@@ -71,7 +62,7 @@ public class IntegracaoPen {
 
                 URL url = new URL(WSDL_PATH);
 
-                QName qname = new QName("http://pen.planejamento.gov.br/interoperabilidade/soap/v2", "InteroperabilidadePENService");
+                QName qname = new QName(PEN_SERVICE_QNAME, PEN_SERVICE_NAME);
 
                 Service service = Service.create(url, qname);
                 this.interoperabilidadePEN = service.getPort(InteroperabilidadePEN.class);
@@ -80,7 +71,6 @@ public class IntegracaoPen {
                 e.printStackTrace();
             }
         }
-
         return this.interoperabilidadePEN;
     }
 
@@ -141,7 +131,7 @@ public class IntegracaoPen {
 
             URL url = new URL(WSDL_PATH);
 
-            QName qname = new QName("http://pen.planejamento.gov.br/interoperabilidade/soap/v2", "InteroperabilidadePENService");
+            QName qname = new QName(PEN_SERVICE_QNAME, PEN_SERVICE_NAME);
 
             Service service = Service.create(url, qname);
             InteroperabilidadePEN ws = service.getPort(InteroperabilidadePEN.class);
