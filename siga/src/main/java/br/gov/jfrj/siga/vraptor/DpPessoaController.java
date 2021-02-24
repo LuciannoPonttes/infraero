@@ -67,6 +67,7 @@ import br.gov.jfrj.siga.cp.bl.SituacaoFuncionalEnum;
 import br.gov.jfrj.siga.cp.model.DpLotacaoSelecao;
 import br.gov.jfrj.siga.dp.CpOrgaoUsuario;
 import br.gov.jfrj.siga.dp.CpUF;
+import br.gov.jfrj.siga.dp.CpTipoPessoa;
 import br.gov.jfrj.siga.dp.DpCargo;
 import br.gov.jfrj.siga.dp.DpFuncaoConfianca;
 import br.gov.jfrj.siga.dp.DpLotacao;
@@ -166,9 +167,18 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 	@Override
 	protected Selecionavel selecionarPorNome(final DpPessoaDaoFiltro flt) throws AplicacaoException {
 		Selecionavel sel = null;
-
-		// Acrescenta o sesb e repete a busca
 		final String sigla = flt.getSigla();
+
+		// inserir codigo para busca por matricula unica no banco
+		try {
+			Long matricula = Long.valueOf(sigla);
+			sel = dao().consultarPorMatriculaUnica(matricula);
+			if (sel != null)
+				return sel;
+		} catch (Exception ex) {
+		}
+		
+		// Acrescenta o sesb e repete a busca
 		flt.setSigla(getTitular().getSesbPessoa() + sigla);
 		sel = dao().consultarPorSigla(flt);
 		if (sel != null)
@@ -420,6 +430,9 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 				if(pessoa.getDataExpedicaoIdentidade() != null) {
 					result.include("dataExpedicaoIdentidade",pessoa.getDataExpedicaoIdentidadeDDMMYYYY());
 				}	
+				if(pessoa.getCpTipoPessoa() != null) {
+					result.include("idTpPessoa", pessoa.getCpTipoPessoa().getIdTpPessoa());
+				}
 			}
 		}
 		if (id == null || (ou.getId() != null && ("ZZ".equals(getTitular().getOrgaoUsuario().getSigla())
@@ -466,9 +479,17 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 				listaFuncao.add(f);
 				listaFuncao.addAll(CpDao.getInstance().consultarPorFiltro(funcao));
 				result.include("listaFuncao", listaFuncao);
-
-				result.include("request", getRequest());
-				result.include("id", id);
+				
+				List<CpTipoPessoa> listaTipoPessoa = new ArrayList<CpTipoPessoa>();
+				CpTipoPessoa tp = new CpTipoPessoa();
+				tp.setDscTpPessoa("Selecione");
+				tp.setIdTpPessoa(0);
+				listaTipoPessoa.add(tp);
+				listaTipoPessoa.addAll(dao().getInstance().listarTiposPessoa());
+				result.include("listaTipoPessoa", listaTipoPessoa);
+				
+				result.include("request",getRequest());
+				result.include("id",id);
 			}
 		}
 		List<CpOrgaoUsuario> list = new ArrayList<CpOrgaoUsuario>();
@@ -575,7 +596,26 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 			result.include("ufList",ufList);
 		}
 
-		if (paramoffset == null) {
+		DpFuncaoConfiancaDaoFiltro funcao = new DpFuncaoConfiancaDaoFiltro();
+		funcao.setNome("");
+		funcao.setIdOrgaoUsu(idOrgaoUsu);
+		List<DpFuncaoConfianca> listaFuncao = new ArrayList<DpFuncaoConfianca>();
+		DpFuncaoConfianca f = new DpFuncaoConfianca();
+		f.setNomeFuncao("Selecione");
+		f.setIdFuncao(0L);
+		listaFuncao.add(f);
+		listaFuncao.addAll(dao().getInstance().consultarPorFiltro(funcao));
+		result.include("listaFuncao", listaFuncao);
+		
+		List<CpTipoPessoa> listaTipoPessoa = new ArrayList<CpTipoPessoa>();
+		CpTipoPessoa tp = new CpTipoPessoa();
+		tp.setDscTpPessoa("Selecione");
+		tp.setIdTpPessoa(0);
+		listaTipoPessoa.add(tp);
+		listaTipoPessoa.addAll(dao().getInstance().listarTiposPessoa());
+		result.include("listaTipoPessoa", listaTipoPessoa);
+		
+		if(paramoffset == null) {
 			result.use(Results.page()).forwardTo("/WEB-INF/page/dpPessoa/edita.jsp");
 		} else if (retornarEnvioEmail != null && retornarEnvioEmail) {
 			result.use(Results.page()).forwardTo("/WEB-INF/page/dpPessoa/enviaEmail.jsp");
@@ -589,7 +629,7 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 	public void editarGravar(final Long id, final Long idOrgaoUsu, final Long idCargo, final Long idFuncao,
 			final Long idLotacao, final String nmPessoa, final String dtNascimento, final String cpf,
 			final String email, final String identidade, final String orgaoIdentidade, final String ufIdentidade,
-			final String dataExpedicaoIdentidade, final String nomeExibicao, final String enviarEmail) throws Exception {
+			final String dataExpedicaoIdentidade, final String nomeExibicao, final String enviarEmail, final Integer idTipoPessoa) throws Exception {
 		
 		assertAcesso("GI:Módulo de Gestão de Identidade;CAD_PESSOA:Cadastrar Pessoa");
 
@@ -613,7 +653,10 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 		if (!isEmailValido(email)) {			
 			throw new AplicacaoException("E-mail inválido");
 		}
-
+		
+		if(idTipoPessoa == null || idTipoPessoa == 0)
+			throw new AplicacaoException("Tipo de pessoa não informado");
+		
 		if (nmPessoa != null && !nmPessoa.matches(Texto.DpPessoa.NOME_REGEX_CARACTERES_PERMITIDOS))
 			throw new AplicacaoException("Nome com caracteres não permitidos");
 
@@ -696,13 +739,15 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 		DpCargo cargo = new DpCargo();
 		DpFuncaoConfianca funcao = new DpFuncaoConfianca();
 		DpLotacao lotacao = new DpLotacao();
-
+		CpTipoPessoa tipoPessoa = new CpTipoPessoa();
+		
 		ou.setIdOrgaoUsu(idOrgaoUsu);
 		ou = CpDao.getInstance().consultarPorId(ou);
 		cargo.setId(idCargo);
 		lotacao.setId(idLotacao);
 		funcao.setIdFuncao(idFuncao);
-
+		tipoPessoa.setIdTpPessoa(idTipoPessoa);
+		
 		pessoa.setOrgaoUsuario(ou);
 		pessoa.setCargo(cargo);
 		pessoa.setLotacao(lotacao);
@@ -711,6 +756,7 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 		} else {
 			pessoa.setFuncaoConfianca(null);
 		}
+		pessoa.setCpTipoPessoa(tipoPessoa);
 		pessoa.setSesbPessoa(ou.getSigla());
 
 		// ÓRGÃO / CARGO / FUNÇÃO DE CONFIANÇA / LOTAÇÃO e CPF iguais.
@@ -753,7 +799,8 @@ public class DpPessoaController extends SigaSelecionavelControllerSupport<DpPess
 				
 				pessoa.setIdPessoaIni(pessoa.getId());
 				pessoa.setIdePessoa(pessoa.getId().toString());
-				pessoa.setMatricula(10000 + pessoa.getId());
+				String cpfString = pessoa.getCpfPessoa().toString();
+				pessoa.setMatricula(Long.parseLong(cpfString.substring(0, cpfString.length()-2)));
 				pessoa.setIdePessoa(pessoa.getMatricula().toString());
 				dao().gravar(pessoa);
 

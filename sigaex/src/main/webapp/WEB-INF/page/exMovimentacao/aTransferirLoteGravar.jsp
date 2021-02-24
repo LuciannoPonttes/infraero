@@ -54,7 +54,7 @@
 							<th>Documento</th>
 							<th>Lotação</th>
 							<th>Descrição</th>
-						</tr>
+					</tr>
 					</thead>
 					<c:forEach var="documento" items="${itens[0]}">
 						<tr >
@@ -71,7 +71,7 @@
 						</tr>
 					</c:forEach>
 				</table>
-			 </div>
+			</div>
 		</div>
 			
 		
@@ -84,16 +84,16 @@
 
 				<div class="card-body">
 					<table class="table table-hover table-striped">
-						<col width="22%" />
-						<col width="5%" />
-						<col width="4%" />
-						<col width="4%" />
-						<col width="5%" />
-						<col width="4%" />
-						<col width="4%" />
-						<col width="4%" />
-						<col width="4%" />
-						<col width="44%" />
+					<col width="22%" />
+					<col width="5%" />
+					<col width="4%" />
+					<col width="4%" />
+					<col width="5%" />
+					<col width="4%" />
+					<col width="4%" />
+					<col width="4%" />
+					<col width="4%" />
+					<col width="44%" />
 						<thead class="${thead_color} align-middle text-center">
 							<tr>
 								<th rowspan="2" class="text-right">Número</th>
@@ -101,7 +101,7 @@
 								<th colspan="3">Última Movimentação</th>
 								<th colspan="2"><fmt:message key="tela.tramitarLote.tipoResponsavel"/></th>
 								<th rowspan="2" class="text-left">Descrição</th>
-							</tr>
+					</tr>
 							<tr>
 								<th>Data</th>
 								<th>Lotação</th>
@@ -111,71 +111,71 @@
 								<th>Pessoa</th>
 								<th>Lotação</th>
 								<th>Pessoa</th>
-							</tr>
+					</tr>
 						</thead>
-						<c:forEach var="documento" items="${itens[1]}">
+					<c:forEach var="documento" items="${itens[1]}">
 							<tr>
 								<td class="text-right">
-									<a href="${pageContext.request.contextPath}/app/expediente/doc/exibir?sigla=${documento[1].exMobil.sigla}">
-										${documento[1].exMobil.codigo}
-									</a>
-									<c:if test="${not documento[1].exMobil.geral}">
-										<input type="hidden" name="itens" value="${documento[1].exMobil.idMobil}" />
+								<a href="${pageContext.request.contextPath}/app/expediente/doc/exibir?sigla=${documento[1].exMobil.sigla}">
+									${documento[1].exMobil.codigo}
+								</a>
+								<c:if test="${not documento[1].exMobil.geral}">
+									<input type="hidden" name="itens" value="${documento[1].exMobil.idMobil}" />
 										<td>
-											${documento[0].dtDocDDMMYY}
-										</td>
+										${documento[0].dtDocDDMMYY}
+									</td>
 										<td>
-											<siga:selecionado sigla="${documento[0].lotaSubscritor.sigla}"
-												descricao="${documento[0].lotaSubscritor.descricao}" />
-										</td>
+										<siga:selecionado sigla="${documento[0].lotaSubscritor.sigla}"
+											descricao="${documento[0].lotaSubscritor.descricao}" />
+									</td>
 										<td>
-											<siga:selecionado sigla="${documento[0].subscritor.iniciais}"
-												descricao="${documento[0].subscritor.descricao}" />
-										</td>
+										<siga:selecionado sigla="${documento[0].subscritor.iniciais}"
+											descricao="${documento[0].subscritor.descricao}" />
+									</td>
 										<td>
-											${documento[1].dtMovDDMMYY}
-										</td>
+										${documento[1].dtMovDDMMYY}
+									</td>
 										<td>
-											<siga:selecionado sigla="${documento[1].lotaSubscritor.sigla}"
-												descricao="${documento[1].lotaSubscritor.descricao}" />
-										</td>
+										<siga:selecionado sigla="${documento[1].lotaSubscritor.sigla}"
+											descricao="${documento[1].lotaSubscritor.descricao}" />
+									</td>
 										<td>
-											<siga:selecionado sigla="${documento[1].subscritor.iniciais}"
-												descricao="${documento[1].subscritor.descricao}" />
-										</td>
+										<siga:selecionado sigla="${documento[1].subscritor.iniciais}"
+											descricao="${documento[1].subscritor.descricao}" />
+									</td>
 										<td>
-											<siga:selecionado sigla="${documento[1].lotaResp.sigla}"
-												descricao="${documento[1].lotaResp.descricao}" />
-										</td>
+										<siga:selecionado sigla="${documento[1].lotaResp.sigla}"
+											descricao="${documento[1].lotaResp.descricao}" />
+									</td>
 										<td>
-											<siga:selecionado sigla="${documento[1].resp.iniciais}"
-												descricao="${documento[1].resp.descricao}" />
-										</td>
-									</c:if>
-									<c:if test="${documento[1].exMobil.geral}">
+										<siga:selecionado sigla="${documento[1].resp.iniciais}"
+											descricao="${documento[1].resp.descricao}" />
+									</td>
+								</c:if>
+								<c:if test="${documento[1].exMobil.geral}">
 										<td>
-											${documento[0].dtDocDDMMYY}
-										</td>
+										${documento[0].dtDocDDMMYY}
+									</td>
 										<td>
-											<siga:selecionado sigla="${documento[0].subscritor.iniciais}"
-												descricao="${documento[0].subscritor.descricao}" />
-										</td>
+										<siga:selecionado sigla="${documento[0].subscritor.iniciais}"
+											descricao="${documento[0].subscritor.descricao}" />
+									</td>
 										<td>
-											<siga:selecionado sigla="${documento[0].lotaSubscritor.sigla}"
-												descricao="${documento[0].lotaSubscritor.descricao}" />
-										</td>
+										<siga:selecionado sigla="${documento[0].lotaSubscritor.sigla}"
+											descricao="${documento[0].lotaSubscritor.descricao}" />
+									</td>
 										<td></td>
 										<td></td>
 										<td></td>
 										<td></td>
-									</c:if>
+								</c:if>
 								<td class="text-left">
-									${f:descricaoConfidencial(documento[0], lotaTitular)}
-								</td>
-							</tr>
-						</c:forEach>
-					</table>
-				</div>
+								${f:descricaoConfidencial(documento[0], lotaTitular)}
+							</td>
+						</tr>
+					</c:forEach>
+				</table>
+			</div>
 			</div>
 			<input type="hidden" name="campoDe" id="campoDe" value="${lotaTitular.descricao} - ${cadastrante.descricao}" />
 			<input type="hidden" name="campoPara" id="campoPara" value="${mov.respString}" />
@@ -184,7 +184,7 @@
 
 		</c:if>
 		<button type="button" class="btn btn-primary" onclick="javascript:history.back();" >Voltar</button>	
-	</form>		
-	</div>	
+	</form>			
+	</div>
 	<br />
 </siga:pagina>

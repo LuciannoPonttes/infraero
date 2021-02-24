@@ -17,8 +17,8 @@
 					</td>
 				</c:when>
 				<c:otherwise>
-					<td width="100%" align="center" valign="bottom">
-						<img src="contextpath/imagens/brasao2.png" width="65" height="65" />
+					<td width="100%" align="left" valign="bottom">
+						<img src="contextpath/imagens/LogoHorizontalAltoContrastePreta.pn" width="200" height="40" />
 					</td>
 				</c:otherwise>
 			</c:choose>
@@ -38,7 +38,7 @@
 			<tr>
 			<tr>
 				<td width="100%" align="center">
-				<p style="font-family: Arial; font-size: 10pt; font-weight: bold;"><c:choose>
+				<p style="font-family: Arial; font-size: 10pt; font-weight: bold;"><br /> <br /><br /><br /><c:choose>
 					<c:when test="${empty mov}">${doc.lotaTitular.orgaoUsuario.descricaoMaiusculas}</c:when>
 					<c:otherwise>${mov.lotaTitular.orgaoUsuario.descricaoMaiusculas}</c:otherwise>
 				</c:choose></p>

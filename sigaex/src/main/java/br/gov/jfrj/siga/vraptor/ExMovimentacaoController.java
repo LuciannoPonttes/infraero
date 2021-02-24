@@ -349,8 +349,15 @@ public class ExMovimentacaoController extends ExController {
 
 		buscarDocumento(documentoBuilder);
 		ExMobil mob = documentoBuilder.getMob();
-		if (mob != null && !mob.isGeral())
+		
+		if (mob != null && !mob.isGeral()) {
 			mob = mob.doc().getMobilGeral();
+		}
+
+		if(!Ex.getInstance().getComp()
+				.podeAnexarArquivoAuxiliar(getTitular(), getLotaTitular(), mob)) {
+			throw new AplicacaoException("Arquivo Auxiliar não pode ser anexado");
+		}
 
 		if(!Ex.getInstance().getComp()
 				.podeAnexarArquivoAuxiliar(getTitular(), getLotaTitular(), mob)) {
@@ -374,8 +381,15 @@ public class ExMovimentacaoController extends ExController {
 		buscarDocumento(documentoBuilder);
 		final ExMobil mobOriginal = documentoBuilder.getMob();
 		ExMobil mob = mobOriginal;
-		if (mob != null && !mob.isGeral())
+		
+		if (mob != null && !mob.isGeral()) {
 			mob = mob.doc().getMobilGeral();
+		}
+		
+		if(!Ex.getInstance().getComp()
+				.podeAnexarArquivoAuxiliar(getTitular(), getLotaTitular(), mob)) {
+			throw new AplicacaoException("Arquivo Auxiliar não pode ser anexado");
+		}
 		
 		if(!Ex.getInstance().getComp()
 				.podeAnexarArquivoAuxiliar(getTitular(), getLotaTitular(), mob)) {

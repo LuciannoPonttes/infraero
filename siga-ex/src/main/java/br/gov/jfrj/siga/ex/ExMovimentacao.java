@@ -1056,19 +1056,19 @@ public class ExMovimentacao extends AbstractExMovimentacao implements
 	public String getConferentesString(Date dtMov) {
 		return Documento.getAssinantesString(getApenasConferenciasCopia(),dtMov);
 	}
-
+	
 	public String getAssinantesCompleto() {
 		String conferentes = getConferentesString(getData());
 		String assinantesToken = getAssinantesComTokenString(getData());
 		String assinantesSenha = getAssinantesComSenhaString(getData());
 		String retorno = "";
 		retorno += assinantesToken.length() > 0 ? "Assinado digitalmente por "
-				+ assinantesToken + ".\n" : "";
+				+ assinantesToken + " em "+ new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(getDtIniMov()) + ".\n" : "";
 		retorno += assinantesSenha.length() > 0 ? "Assinado com senha por "
-				+ assinantesSenha + ".\n" : "";
+				+ assinantesSenha + " em "+ new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(getDtIniMov()) + ".\n" : "";
 
 		retorno += conferentes.length() > 0 ? "Autenticado digitalmente por "
-				+ conferentes + ".\n" : "";
+				+ conferentes + " em "+ new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(getDtIniMov()) + ".\n" : "";
 
 		return retorno;
 	}

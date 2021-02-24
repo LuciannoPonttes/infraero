@@ -477,7 +477,7 @@
 								<c:forEach items="${orgaosUsu}" var="item">
 									<option value="${item.idOrgaoUsu}"
 										${item.idOrgaoUsu == orgaoUsu ? 'selected' : ''}>
-										${item.nmOrgaoUsu}</option>
+										${item.acronimoOrgaoUsu} - ${item.nmOrgaoUsu}</option>
 								</c:forEach>
 							</select>
 						</div>
