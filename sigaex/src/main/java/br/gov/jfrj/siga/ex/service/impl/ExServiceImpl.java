@@ -81,10 +81,12 @@ import br.gov.jfrj.siga.ex.ExSequencia;
 import br.gov.jfrj.siga.ex.ExSituacaoConfiguracao;
 import br.gov.jfrj.siga.ex.ExTipoDocumento;
 import br.gov.jfrj.siga.ex.ExTipoMobil;
+import br.gov.jfrj.siga.ex.bl.CurrentRequest;
 import br.gov.jfrj.siga.ex.ExTipoMovimentacao;
 import br.gov.jfrj.siga.ex.bl.Ex;
 import br.gov.jfrj.siga.ex.bl.ExCompetenciaBL;
 import br.gov.jfrj.siga.ex.bl.ExConfiguracaoBL;
+import br.gov.jfrj.siga.ex.bl.RequestInfo;
 import br.gov.jfrj.siga.ex.service.ExService;
 import br.gov.jfrj.siga.ex.util.FuncoesEL;
 import br.gov.jfrj.siga.hibernate.ExDao;
@@ -154,9 +156,6 @@ public class ExServiceImpl implements ExService {
 				ContextoPersistencia.setEntityManager(null);
 			}
 		}
-	}
-	public boolean isHideStackTrace() {
-		return hideStackTrace;
 	}		
 
 	@Resource
@@ -454,8 +453,8 @@ public class ExServiceImpl implements ExService {
 					final ExMobilDaoFiltro filter = new ExMobilDaoFiltro();
 					filter.setSigla(codigo);
 					mob = (ExMobil) dao().consultarPorSigla(filter);
-					// return Ex.getInstance().getBL().toJSON(mob);
-					return "";
+					return Ex.getInstance().getBL().toJSON(mob);
+					//return "";
 				}
 			} catch (Exception ex) {
 				ctx.rollback(ex);
@@ -817,19 +816,6 @@ public class ExServiceImpl implements ExService {
 			}
 		}
 	}
-	
-	public String toJSON(String codigo) throws Exception {
-		try {
-			ExMobil mob = null;
-			{
-				final ExMobilDaoFiltro filter = new ExMobilDaoFiltro();
-				filter.setSigla(codigo);
-				mob = (ExMobil) dao().consultarPorSigla(filter);
-				return Ex.getInstance().getBL().toJSON(mob);
-				//return "";
-			}
-		}
-	}
 
 	public String obterNumeracaoExpediente(Long idOrgaoUsu, Long idFormaDoc, Long anoEmissao) throws Exception {
 		try (SoapContext ctx = new SoapContext(true)) {
@@ -1072,7 +1058,7 @@ public class ExServiceImpl implements ExService {
 					.assinarDocumentoComSenha(cadastranteParser.getPessoa(),
 							cadastranteParser.getLotacao(), doc, mov.getDtMov(),
 							nomeUsuarioSubscritor, senhaUsuarioSubscritor, true,
-							mov.getTitular(), true, juntar, tramitar);
+							mov.getTitular(), true, juntar, tramitar, false);
 		} catch (Exception e) {
 			throw e;
 			
@@ -1395,7 +1381,7 @@ public class ExServiceImpl implements ExService {
 					.assinarDocumentoComSenha(cadastranteParser.getPessoa(),
 							cadastranteParser.getLotacao(), doc, mov.getDtMov(),
 							nomeUsuarioSubscritor, senhaUsuarioSubscritor, true,
-							mov.getTitular(), copia, juntar, tramitar);
+							mov.getTitular(), copia, juntar, tramitar,false);
 		} catch (Exception e) {
 			throw e;
 			
@@ -1836,8 +1822,7 @@ public class ExServiceImpl implements ExService {
 			
 			resultado = dArray.toString();
 		}catch(Exception e){
-			if (!isHideStackTrace())
-				e.printStackTrace(System.out);
+			e.printStackTrace(System.out);
 			throw e;
 		}
 		return resultado;
@@ -1887,8 +1872,7 @@ public class ExServiceImpl implements ExService {
 			
 			
 		}catch(Exception e){
-			if (!isHideStackTrace())
-				e.printStackTrace(System.out);
+			e.printStackTrace(System.out);
 			throw e;
 		}
 		
@@ -1936,8 +1920,7 @@ public class ExServiceImpl implements ExService {
 
 			
 		}catch(Exception e){
-			if (!isHideStackTrace())
-				e.printStackTrace(System.out);
+			e.printStackTrace(System.out);
 			throw e;
 		}
 		
@@ -1979,8 +1962,7 @@ public class ExServiceImpl implements ExService {
 			return cossignatarios.toString();
 			
 		}catch(Exception e){
-			if (!isHideStackTrace())
-				e.printStackTrace(System.out);
+			e.printStackTrace(System.out);
 			throw e;
 		}
 
@@ -2004,8 +1986,7 @@ public class ExServiceImpl implements ExService {
 			return true;
 			
 		}catch(Exception e){
-			if (!isHideStackTrace())
-				e.printStackTrace(System.out);
+			e.printStackTrace(System.out);
 			throw e;
 		
 		}
@@ -2032,7 +2013,9 @@ public class ExServiceImpl implements ExService {
 				if (mov != null && !completo && !estampar) {
 					ab = mov.getConteudoBlobpdf();
 				} else {
-					ab = Documento.getDocumento(mob, mov, completo, estampar, null, null);
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					Documento.getDocumento(baos, null, mob, mov, completo, estampar, false, null,null);
+					ab = baos.toByteArray();
 				}
 				if (ab == null) {
 					throw new Exception("PDF inválido!");
@@ -2042,8 +2025,7 @@ public class ExServiceImpl implements ExService {
 			return ab;
 
 		}catch(Exception e){
-			if (!isHideStackTrace())
-				e.printStackTrace(System.out);
+			e.printStackTrace(System.out);
 			throw e;
 		}
 		
@@ -2081,8 +2063,7 @@ public class ExServiceImpl implements ExService {
 			return dArray.toString();
 			
 		}catch(Exception e){
-			if (!isHideStackTrace())
-				e.printStackTrace(System.out);
+			e.printStackTrace(System.out);
 			throw e;
 		}
 	}
@@ -2120,8 +2101,7 @@ public class ExServiceImpl implements ExService {
 			return lArray.toString();
 			
 		}catch (Exception e) {
-			if (!isHideStackTrace())
-				e.printStackTrace(System.out);
+			e.printStackTrace(System.out);
 			throw e;
 		}
 
