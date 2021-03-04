@@ -59,10 +59,10 @@ public class ExLogAcessoDocsFilter implements Filter{
 	}
 
 	/**
-	 * Marca o momento em que o ThreadFilter iniciou a execução do método
-	 * doFilter e grava a URL que está sendo executada. Estes dados serão
-	 * utilizados para gerar o Log do tempo gastu durante a execução do filtro
-	 * para a URL em questão.</br> <b>Obs:</b> Para que funcione, é necessário
+	 * Marca o momento em que o ThreadFilter iniciou a execuï¿½ï¿½o do mï¿½todo
+	 * doFilter e grava a URL que estï¿½ sendo executada. Estes dados serï¿½o
+	 * utilizados para gerar o Log do tempo gastu durante a execuï¿½ï¿½o do filtro
+	 * para a URL em questï¿½o.</br> <b>Obs:</b> Para que funcione, ï¿½ necessï¿½rio
 	 * que a propriedade <i>audita.thread.filter</i> esteja definida como
 	 * <i>true</i> no arquivo <i>siga.properties</i>.
 	 * 
@@ -99,17 +99,17 @@ public class ExLogAcessoDocsFilter implements Filter{
 	/**
 	 * 
 	 * @param request
-	 * @return Matrícula do Usuário obtida através do método getName da
-	 *         implementação da interface Principal
+	 * @return Matrï¿½cula do Usuï¿½rio obtida atravï¿½s do mï¿½todo getName da
+	 *         implementaï¿½ï¿½o da interface Principal
 	 */
 	protected String getUserPrincipalName(HttpServletRequest request) {
 		return ContextoPersistencia.getUserPrincipal() != null ? ContextoPersistencia.getUserPrincipal() : "";
 	}
 
 	/**
-	 * Marca o momento em que o ThreadFilter terminou a execução do método
-	 * doFilter loga a URL que está sendo executada e o tempo gasto durante o
-	 * processo.</br> <b>Obs:</b> Para que funcione, é necessário que a
+	 * Marca o momento em que o ThreadFilter terminou a execuï¿½ï¿½o do mï¿½todo
+	 * doFilter loga a URL que estï¿½ sendo executada e o tempo gasto durante o
+	 * processo.</br> <b>Obs:</b> Para que funcione, ï¿½ necessï¿½rio que a
 	 * propriedade <i>audita.thread.filter</i> esteja definida como <i>true</i>
 	 * no arquivo <i>siga.properties</i>.
 	 */
@@ -130,10 +130,10 @@ public class ExLogAcessoDocsFilter implements Filter{
 	}
 
 	/**
-	 * Extrai o contexto da aplicação a partir da requisição
+	 * Extrai o contexto da aplicaï¿½ï¿½o a partir da requisiï¿½ï¿½o
 	 * 
 	 * @param request
-	 * @return Contexto da aplicação
+	 * @return Contexto da aplicaï¿½ï¿½o
 	 */
 	private String getContexto(HttpServletRequest request) {
 		String contexto = request.getContextPath();
@@ -157,7 +157,7 @@ public class ExLogAcessoDocsFilter implements Filter{
 			hostName = InetAddress.getLocalHost().getHostName();
 		} catch (UnknownHostException e) {
 			log.warn(
-					"Não foi possível identificar o nome do Host para adicioná-lo ao Log por CSV",
+					"Nï¿½o foi possï¿½vel identificar o nome do Host para adicionï¿½-lo ao Log por CSV",
 					e);
 			e.printStackTrace();
 		}

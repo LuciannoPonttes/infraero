@@ -203,6 +203,15 @@ public class Prop {
 		provider.addPublicProperty("/siga.sgp.lot.url", "/sigarhlotacao");
 		provider.addPublicProperty("/siga.sgp.trn.url", "/sigatr");
 		provider.addPublicProperty("/siga.sgp.terc.url", "/sigarhterceirizados");
+		/*
+		provider.addPublicProperty("/sigaex.classificacao.mascara.entrada",
+				"([0-9]{0,2})\\.?([0-9]{0,2})?\\.?([0-9]{0,2})?\\.?([0-9]{0,2})?([A-Z])?");
+		provider.addPublicProperty("/sigaex.classificacao.mascara.exibicao", null);
+		provider.addPublicProperty("/sigaex.classificacao.mascara.javascript", "99.99.99.99");
+		provider.addPublicProperty("/sigaex.classificacao.mascara.nome.nivel", "NULL,Assunto,Classe,Subclasse,Atividade");
+		provider.addPublicProperty("/sigaex.classificacao.mascara.saida", "%1$02d.%2$02d.%3$02d.%4$02d");
+		provider.addPublicProperty("/sigaex.classificacao.nivel.minimo.de.enquadramento", null);
+		*/
 
 		/* Parâmetros para configuração do armazenamento de documento */
 		provider.addPublicProperty("/siga.armazenamento.arquivo.tipo", "BLOB");
