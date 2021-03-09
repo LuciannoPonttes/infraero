@@ -40,7 +40,7 @@
 				<h5>Selecione a abrangência</h5>
 			</div>
 			<div class="card-body">	
-			<form id="listar" name="listar" action="listar" method="get" class="form100">
+				<form id="listar" name="listar" action="listar" method="get" class="form100">
 				<input type="hidden" name="servicoPai" value="${servicoPai}" />
 				<div class="row">
 					<div class="col-sm">
@@ -55,7 +55,7 @@
 									<select name="idOrgaoUsuSel" class="form-control  siga-select2">
 										<c:forEach items="${orgaosUsu}" var="item">
 											<option value="${item.idOrgaoUsu}" ${item.idOrgaoUsu == idOrgaoUsuSel ? 'selected' : ''}>
-												${item.nmOrgaoUsu}
+												${item.acronimoOrgaoUsu} - ${item.nmOrgaoUsu}
 											</option>  
 										</c:forEach>
 									</select>		
@@ -76,43 +76,43 @@
 						<button type="submit" class="btn btn-primary">Pesquisar</button>
 					</div>
 				</div>
-			</form>
-			</div>			
+				</form>
+			</div>
 		</div>	
-	
 
-		<c:if test="${not empty itensHTML}">
+
+			<c:if test="${not empty itensHTML}">
 			<h3 class="gt-table-head">Permissões</h3>
 			<table class="table table-sm table-striped">
-				<colgroup>
-					<col width="15%" />
-				</colgroup>
-				<c:if test="${idAbrangencia == 1}">
+						<colgroup>
+							<col width="15%" />
+						</colgroup>
+						<c:if test="${idAbrangencia == 1}">
 					<thead class="${thead_color}">
 						<tr>
 							<th>Órgão usuário:</th>
 							<th>${nomeOrgaoUsuSel}</th>
-						</tr>
+							</tr>
 					</thead>
-				</c:if>
-				<c:if test="${idAbrangencia == 2}">
+						</c:if>
+						<c:if test="${idAbrangencia == 2}">
 					<thead class="${thead_color}">
 						<tr>
-							<td>Lotação:</td>
-							<td>${lotacaoSel.descricao}</td>
-						</tr>
+								<td>Lotação:</td>
+								<td>${lotacaoSel.descricao}</td>
+							</tr>
 						<tr >
-							<td>Sigla:</td>
-							<td>${lotacaoSel.sigla}</td>
-						</tr>
+								<td>Sigla:</td>
+								<td>${lotacaoSel.sigla}</td>
+							</tr>
 					</thead>
-				</c:if>
-				<c:if test="${idAbrangencia == 3}">
+						</c:if>
+						<c:if test="${idAbrangencia == 3}">
 					<thead class="${thead_color}">
 						<tr>
-							<td>Pessoa:</td>
-							<td>${pessoaSel.descricao}</td>
-						</tr>
+								<td>Pessoa:</td>
+								<td>${pessoaSel.descricao}</td>
+							</tr>
 					</thead>
 	
 					<tr>

@@ -3473,11 +3473,13 @@ public class ExCompetenciaBL extends CpCompetenciaBL {
 			return false;
 		if (!mob.doc().getLotaCadastrante().equivale(lotaTitular))
 			return false;
-
-		return getConf().podePorConfiguracao(titular, lotaTitular,
-				ExTipoMovimentacao.TIPO_MOVIMENTACAO_INCLUSAO_DE_COSIGNATARIO,
+	
+		ExTipoMovimentacao exTpMov = ExDao.getInstance().consultar(ExTipoMovimentacao.TIPO_MOVIMENTACAO_INCLUSAO_DE_COSIGNATARIO,
+				ExTipoMovimentacao.class, false);
+		return getConf().podePorConfiguracao(null, null, null, null, mob.getExDocumento().getExFormaDocumento(), null, null,
+				null, exTpMov, null, null, null, lotaTitular, titular, null,null,
 				CpTipoConfiguracao.TIPO_CONFIG_MOVIMENTAR);
-	}
+		}
 
 	/**
 	 * Retorna se é possível incluir o móbil em edital de eliminação, de acordo
@@ -4483,6 +4485,21 @@ public class ExCompetenciaBL extends CpCompetenciaBL {
 				&& getConf().podePorConfiguracao(titular, lotaTitular,
 						ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA,
 						CpTipoConfiguracao.TIPO_CONFIG_MOVIMENTAR);
+	}
+
+	public boolean podeTransferirPen(final DpPessoa titular,
+								  final DpLotacao lotaTitular, final ExMobil mob) {
+
+		if(!podeSerTransferido(mob))
+			return false;
+
+		if((mob.getExDocumento().getExFormaDocumento().getCodEspeciePen() == null || mob.getExDocumento().getExFormaDocumento().getCodEspeciePen().isEmpty()) && !mob.getDoc().isProcesso())
+			return false;
+
+		return podeMovimentar(titular, lotaTitular, mob)
+				&& getConf().podePorConfiguracao(titular, lotaTitular,
+				ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA,
+				CpTipoConfiguracao.TIPO_CONFIG_MOVIMENTAR);
 	}
 	
 	public boolean podeSerTransferido(final ExMobil mob) {

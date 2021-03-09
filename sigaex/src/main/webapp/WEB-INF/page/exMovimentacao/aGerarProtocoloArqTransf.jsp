@@ -64,7 +64,7 @@
 							<th colspan="3">Última Movimentação</th>
 							<th colspan="2">Atendente</th>
 							<th rowspan="2" class="text-left">Descrição</th>
-						</tr>
+					</tr>
 						<tr>
 							<th>Data</th>
 							<th><fmt:message key="usuario.lotacao"/></th>
@@ -74,7 +74,7 @@
 							<th><fmt:message key="usuario.pessoa2"/></th>
 							<th><fmt:message key="usuario.lotacao"/></th>
 							<th><fmt:message key="usuario.pessoa2"/></th>
-						</tr>
+					</tr>
 
 					<c:forEach var="i" items="${itens}">
 						<tr>
@@ -132,7 +132,7 @@
 			</div>
 		</div>
 
-		<br />
+			<br />
 		<div id="btn-form">
 			<form name="frm" action="principal" namespace="/" method="get"
 				theme="simple">
@@ -142,13 +142,13 @@
 				</c:if>
 			</form>
 		</div>
-		<br /> <br />
-		<div>
 			<br /> <br />
-			<p align="center">Recebido em: _____/_____/_____ às _____:_____</p>
-			<br /> <br /> <br />
-			<p align="center">________________________________________________</p>
-			<p align="center">Assinatura do Servidor</p>
+			<div>
+				<br /> <br />
+				<p align="center">Recebido em: _____/_____/_____ às _____:_____</p>
+				<br /> <br /> <br />
+				<p align="center">________________________________________________</p>
+				<p align="center">Assinatura do Empregado e Matrícula</p>
+			</div>
 		</div>
-	</div>
 </siga:pagina>

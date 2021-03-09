@@ -20,20 +20,27 @@
 							Acompanhamento e Autenticação de Documentos
 						</h5>
 					</div>
-					<div class="card-body">
 
+					<div class="card-body">	
 						<div>
+	<c:if test="${codigoDocBloqueado != null}">
+		O documento ${codigoDocBloqueado} é válido. Não é possível exibir seu conteúdo na página de autenticação, devido à restrição de acesso atribuída a esse expediente.
+    </c:if>    
+    <c:if test="${codigoDocBloqueado == null}">
 							<c:url var='pdfAssinado'
 								value='/public/app/arquivoAutenticado_stream?jwt=${jwt}&assinado=true' />
 							<c:url var='pdf'
 								value='/public/app/arquivoAutenticado_stream?jwt=${jwt}&assinado=false' />
 							<iframe src="${pdfAssinado}" width="100%" height="600"
 								align="center" style="margin-top: 10px;"> </iframe>
+    </c:if>
 						</div>
 					</div>
 				</div>
 			</div>
 			<div class="col">
+				
+				<c:if test="${codigoDocBloqueado == null}">
 				<div class="row">
 					<div class="col">
 						<div class="card bg-light mb-3" >
@@ -48,6 +55,7 @@
 						</div>
 					</div>
 				</div>
+				</c:if>
 				<div class="row">
 					<div class="col">
 						<div class="card bg-light mb-3" >

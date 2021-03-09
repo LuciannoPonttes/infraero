@@ -4,8 +4,12 @@ import static br.gov.jfrj.siga.ex.ExMobil.adicionarIndicativoDeMovimentacaoComOr
 import static br.gov.jfrj.siga.ex.ExMobil.removerIndicativoDeMovimentacaoComOrigemPeloBotaoDeRestricaoDeAcesso;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.nio.file.Files;
+import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.SimpleDateFormat;
@@ -17,6 +21,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
@@ -31,7 +36,12 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 
+import br.gov.infraero.siga.pen.client.*;
+import br.gov.jfrj.itextpdf.Documento;
+import br.gov.jfrj.siga.dp.*;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.xerces.impl.dv.util.Base64;
@@ -115,6 +125,7 @@ public class ExMovimentacaoController extends ExController {
 			.getLogger(ExMovimentacaoController.class);
 	
 	private static final int MAX_ITENS_PAGINA_TRAMITACAO_LOTE = 50;
+	private static IntegracaoPen integracaoPen = new IntegracaoPen();
 	
 	/**
 	 * @deprecated CDI eyes only
@@ -351,8 +362,15 @@ public class ExMovimentacaoController extends ExController {
 
 		buscarDocumento(documentoBuilder);
 		ExMobil mob = documentoBuilder.getMob();
-		if (mob != null && !mob.isGeral())
+		
+		if (mob != null && !mob.isGeral()) {
 			mob = mob.doc().getMobilGeral();
+		}
+
+		if(!Ex.getInstance().getComp()
+				.podeAnexarArquivoAuxiliar(getTitular(), getLotaTitular(), mob)) {
+			throw new AplicacaoException("Arquivo Auxiliar não pode ser anexado");
+		}
 
 		if(!Ex.getInstance().getComp()
 				.podeAnexarArquivoAuxiliar(getTitular(), getLotaTitular(), mob)) {
@@ -376,8 +394,15 @@ public class ExMovimentacaoController extends ExController {
 		buscarDocumento(documentoBuilder);
 		final ExMobil mobOriginal = documentoBuilder.getMob();
 		ExMobil mob = mobOriginal;
-		if (mob != null && !mob.isGeral())
+		
+		if (mob != null && !mob.isGeral()) {
 			mob = mob.doc().getMobilGeral();
+		}
+		
+		if(!Ex.getInstance().getComp()
+				.podeAnexarArquivoAuxiliar(getTitular(), getLotaTitular(), mob)) {
+			throw new AplicacaoException("Arquivo Auxiliar não pode ser anexado");
+		}
 		
 		if(!Ex.getInstance().getComp()
 				.podeAnexarArquivoAuxiliar(getTitular(), getLotaTitular(), mob)) {
@@ -1896,6 +1921,520 @@ public class ExMovimentacaoController extends ExController {
 		result.include("protocolo", OPCAO_MOSTRAR.equals(protocolo));
 		result.include("dtDevolucaoMovString", dtDevolucaoMovString);
 	}
+
+	@Post("/app/expediente/mov/enviar_pen")
+	@Get("/app/expediente/mov/enviar_pen")
+	public void aEnviarPEN(final String sigla, final Long idTpDespacho,
+							final Integer tipoResponsavel, final int postback,
+							final String dtMovString, final DpPessoaSelecao subscritorSel,
+							final boolean substituicao, final DpPessoaSelecao titularSel,
+							final String nmFuncaoSubscritor, final long idResp,
+							final List<ExTipoDespacho> tiposDespacho, final String descrMov,
+							final DpLotacaoSelecao lotaResponsavelSel,
+							final DpPessoaSelecao responsavelSel,
+							final CpOrgaoSelecao cpOrgaoSel, final String dtDevolucaoMovString,
+							final String obsOrgao, final String protocolo, final Long idEstruturaRepositorio) {
+
+		this.setPostback(postback);
+
+		final BuscaDocumentoBuilder builder = BuscaDocumentoBuilder
+				.novaInstancia().setSigla(sigla);
+		final ExDocumento doc = buscarDocumento(builder);
+		final DpPessoaSelecao subscritorSelFinal = Optional.fromNullable(
+				subscritorSel).or(new DpPessoaSelecao());
+		final DpLotacaoSelecao lotaResponsavelSelFinal = Optional.fromNullable(
+				lotaResponsavelSel).or(new DpLotacaoSelecao());
+		final DpPessoaSelecao responsavelSelFinal = Optional.fromNullable(
+				responsavelSel).or(new DpPessoaSelecao());
+		final DpPessoaSelecao titularSelFinal = Optional.fromNullable(
+				titularSel).or(new DpPessoaSelecao());
+		final CpOrgaoSelecao cpOrgaoSelecaoFinal = Optional.fromNullable(
+				cpOrgaoSel).or(new CpOrgaoSelecao());
+		final ExMovimentacao ultMov = builder.getMob().getUltimaMovimentacao();
+
+		Integer tipoResponsavelFinal = Optional.fromNullable(tipoResponsavel)
+				.or(DEFAULT_TIPO_RESPONSAVEL);
+
+		if (getRequest().getAttribute("postback") == null) {
+			if (ultMov.getLotaDestinoFinal() != null) {
+				lotaResponsavelSelFinal.buscarPorObjeto(ultMov
+						.getLotaDestinoFinal());
+				tipoResponsavelFinal = 1;
+			}
+			if (ultMov.getDestinoFinal() != null) {
+				responsavelSelFinal.buscarPorObjeto(ultMov.getDestinoFinal());
+				tipoResponsavelFinal = 2;
+			}
+		}
+
+		if (!(Ex.getInstance()
+				.getComp()
+				.podeTransferir(getTitular(), getLotaTitular(),
+						builder.getMob()) || Ex
+				.getInstance()
+				.getComp()
+				.podeDespachar(getTitular(), getLotaTitular(), builder.getMob()))) {
+			throw new AplicacaoException(
+					"Não é possível fazer despacho nem transferência");
+		}
+
+		result.include("ehPublicoExterno", AcessoConsulta.ehPublicoExterno(getTitular()));
+		result.include("doc", doc);
+		result.include("mob", builder.getMob());
+		result.include("postback", this.getPostback());
+		result.include("sigla", sigla);
+		result.include("tiposDespacho", this.getTiposDespacho(builder.getMob()));
+		//result.include("listaTipoResp", this.getListaTipoResp());
+		result.include("tipoResponsavel", tipoResponsavelFinal);
+		result.include("subscritorSel", subscritorSelFinal);
+		result.include("titularSel", titularSelFinal);
+		result.include("lotaResponsavelSel", lotaResponsavelSelFinal);
+		result.include("responsavelSel", responsavelSelFinal);
+		result.include("idTpDespacho", idTpDespacho);
+		result.include("cpOrgaoSel", cpOrgaoSelecaoFinal);
+		result.include("dtMovString", dtMovString);
+		result.include("substituicao", substituicao);
+		result.include("nmFuncaoSubscritor", nmFuncaoSubscritor);
+		result.include("idResp", idResp);
+		result.include("descrMov", descrMov);
+		result.include("obsOrgao", obsOrgao);
+		result.include("protocolo", OPCAO_MOSTRAR.equals(protocolo));
+		result.include("dtDevolucaoMovString", dtDevolucaoMovString);
+
+		result.include("listaRepositorioEstruturas", this.getListaRepositorioEstruturaPen());
+
+		List<EstruturasEncontradas.Estrutura> estruturas = new ArrayList<>();
+
+		if(idEstruturaRepositorio != null && idEstruturaRepositorio != 0l){
+			estruturas = consultarEstruturas(idEstruturaRepositorio);
+		}
+
+		result.include("listaEstrutura", estruturas);
+		result.include("idEstruturaRepositorio", idEstruturaRepositorio);
+	}
+
+	protected Map<String, String> getListaRepositorioEstruturaPen() {
+		final Map<String, String> map = new LinkedHashMap<String, String>();
+		List<RepositoriosEncontrados.Repositorio> repositorios = integracaoPen.listarRepositorioEstruturas();
+		//repositorios.sort(Comparator.comparing(RepositoriosEncontrados.Repositorio::getNome));
+		//System.out.println(repositorios);
+		//repositorios.sort(Comparator.comparing(repositorio -> repositorio.getNome()));
+/*		repositorios.sort(new Comparator<RepositoriosEncontrados.Repositorio>() {
+			@Override
+			public int compare(RepositoriosEncontrados.Repositorio r1, RepositoriosEncontrados.Repositorio r2) {
+				if(r1.getNome() == r2.getNome()){
+					return 0;
+				}
+				return r1.getNome().compareTo(r2.getNome());
+			}
+		});*/
+		for(RepositoriosEncontrados.Repositorio repositorio : repositorios){
+			map.put(repositorio.getId(), repositorio.getNome());
+		}
+		//repositorios.forEach(repositorio -> map.put(repositorio.getId(), repositorio.getNome()));
+		return map;
+	}
+
+	protected List<EstruturasEncontradas.Estrutura> consultarEstruturas(Long idRepositorioEstrutura) {
+		final Map<String, String> map = new LinkedHashMap<String, String>();
+		List<EstruturasEncontradas.Estrutura> estruturas = integracaoPen.consultarEstruturas(idRepositorioEstrutura);
+		return estruturas;
+	}
+
+
+	@Transacional
+	@Post("/app/expediente/mov/enviar_pen_gravar")
+	public void enviarPenGravar(final int postback, final String sigla,
+								 final String dtMovString, final DpPessoaSelecao subscritorSel,
+								 final boolean substituicao, final DpPessoaSelecao titularSel,
+								 final String nmFuncaoSubscritor, final long idTpDespacho,
+								 final long idResp, final List<ExTipoDespacho> tiposDespacho,
+								 final String descrMov,
+								 final List<Map<Integer, String>> listaTipoResp,
+								 final int tipoResponsavel,
+								 final DpLotacaoSelecao lotaResponsavelSel,
+								 final DpPessoaSelecao responsavelSel,
+								 CpOrgaoSelecao cpOrgaoSel, final String dtDevolucaoMovString,
+								 final String obsOrgao, final String protocolo, final long idEstruturaRepositorio, final long idEstrutura) throws Exception {
+		this.setPostback(postback);
+
+		if(dtDevolucaoMovString != null && !"".equals(dtDevolucaoMovString.trim())) {
+			SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+			Date dtDevolucao = sdf.parse(dtDevolucaoMovString);
+
+			if (SigaMessages.isSigaSP()) {
+				if (!DateUtils.isSameDay(new Date(), dtDevolucao) && dtDevolucao.before(new Date())) {
+					result.include("msgCabecClass", "alert-danger");
+					result.include("mensagemCabec", "Data de devolução não pode ser anterior à data de hoje.");
+					result.forwardTo(this).aTransferir(
+							sigla, idTpDespacho, tipoResponsavel, postback, dtMovString, subscritorSel,
+							substituicao, titularSel, nmFuncaoSubscritor, idResp, tiposDespacho, descrMov,
+							lotaResponsavelSel, responsavelSel, cpOrgaoSel, dtDevolucaoMovString, obsOrgao, protocolo);
+
+					return;
+				}
+			}
+		}
+
+		final BuscaDocumentoBuilder builder = BuscaDocumentoBuilder
+				.novaInstancia().setSigla(sigla);
+		buscarDocumento(builder);
+
+		if(responsavelSel != null) {
+			Boolean podeTramitar = Boolean.FALSE;
+			List<ExMovimentacao> listaMov = new ArrayList<ExMovimentacao>();
+			listaMov.addAll(builder.getMob().getDoc().getMobilGeral().getMovsNaoCanceladas(ExTipoMovimentacao.TIPO_MOVIMENTACAO_RESTRINGIR_ACESSO));
+
+			for (ExMovimentacao exMovimentacao : listaMov) {
+				if(exMovimentacao.getSubscritor().equals(responsavelSel.getObjeto())) {
+					podeTramitar = Boolean.TRUE;
+					break;
+				}
+			}
+			if(!listaMov.isEmpty() && !podeTramitar) {
+				throw new AplicacaoException(
+						"Documento não pode ser tramitado para esta pessoa/lotação.");
+			}
+		}
+
+		EstruturasEncontradas.Estrutura estrutura = integracaoPen.consultarEstrutura(idEstruturaRepositorio, idEstrutura);
+
+		CpOrgao cpOrgao = CpDao.getInstance().getOrgaoFromSigla(estrutura.getSigla());
+		if(cpOrgao == null){
+			cpOrgao = new CpOrgao();
+			cpOrgao.setNmOrgao(estrutura.getNome());
+			cpOrgao.setHisAtivo(1);
+			cpOrgao.setSigla(estrutura.getSigla());
+
+		/*	CpOrgaoUsuario cpOrgaoUsuario = new CpOrgaoUsuario();
+			cpOrgaoUsuario.setIdOrgaoUsu(9999999999l);
+			cpOrgaoUsuario.setNmOrgaoUsu(estrutura.getNome());*/
+			CpOrgaoUsuario cpOrgaoUsuario = CpDao.getInstance().consultar(9999999999l, CpOrgaoUsuario.class, false);
+			//CpDao.getInstance().consultarOrgaoUsuarioPorId(9999999999l);
+			cpOrgao.setOrgaoUsuario(cpOrgaoUsuario);
+			CpDao cpDao = CpDao.getInstance();
+			try {
+				cpDao.iniciarTransacao();
+				Object a = cpDao.em().getProperties();
+				Object b = cpDao.em().getMetamodel();
+				//dao().gravar(cpOrgaoUsuario);
+				//cpOrgao.setOrgaoUsuario(cpOrgaoUsuario);
+				cpDao.gravar(cpOrgao);
+				cpDao.commitTransacao();
+			} catch (final Exception e) {
+				cpDao.rollbackTransacao();
+				throw new AplicacaoException("Erro na gravação", 0, e);
+			}
+
+			//cpOrgaoUsuario = CpDao.getInstance().gravar(cpOrgaoUsuario);
+
+			//cpOrgao.setOrgaoUsuario(cpOrgaoUsuario);
+			//cpOrgao = CpDao.getInstance().gravar(cpOrgao);
+			cpOrgaoSel = new CpOrgaoSelecao();
+			cpOrgaoSel.setId(cpOrgao.getId());
+			cpOrgaoSel.buscarPorId();
+		}
+
+		final ExMovimentacaoBuilder movimentacaoBuilder = ExMovimentacaoBuilder
+				.novaInstancia();
+		movimentacaoBuilder.setDtMovString(dtMovString)
+				.setSubscritorSel(subscritorSel).setMob(builder.getMob())
+				.setSubstituicao(substituicao).setTitularSel(titularSel)
+				.setNmFuncaoSubscritor(nmFuncaoSubscritor)
+				.setIdTpDespacho(idTpDespacho).setDescrMov(descrMov)
+				.setLotaResponsavelSel(lotaResponsavelSel)
+				.setResponsavelSel(responsavelSel)
+				.setDtDevolucaoMovString(dtDevolucaoMovString)
+				.setCpOrgaoSel(cpOrgaoSel).setObsOrgao(obsOrgao);
+
+		final ExMovimentacao mov = movimentacaoBuilder.construir(dao());
+
+		final ExMovimentacao UltMov = builder.getMob()
+				.getUltimaMovimentacaoNaoCancelada();
+		if ((mov.getLotaResp() != null && mov.getResp() == null
+				&& UltMov.getLotaResp() != null && UltMov.getResp() == null && UltMov
+				.getLotaResp().equivale(mov.getLotaResp()))
+				|| (mov.getResp() != null && UltMov.getResp() != null && UltMov
+				.getResp().equivale(mov.getResp()))) {
+			throw new AplicacaoException(
+					"Novo responsável não pode ser igual ao atual");
+		}
+
+		if (!Ex.getInstance().getComp()
+				.podeReceberPorConfiguracao(mov.getResp(), mov.getLotaResp())) {
+			throw new AplicacaoException(
+					"Destinatário não pode receber documentos");
+		}
+
+		if((mov.getLotaResp() != null && mov.getLotaResp().getIsSuspensa() != null && mov.getLotaResp().getIsSuspensa().equals(1))
+				|| (mov.getResp() != null && mov.getResp().getLotacao().getIsSuspensa() != null && mov.getResp().getLotacao().getIsSuspensa().equals(1))) {
+			result.include("msgCabecClass", "alert-danger");
+			if(mov.getResp() != null) {
+				result.include("mensagemCabec", "A " + SigaMessages.getMessage("usuario.lotacao") + " do Usuário informado está Suspensa para o recebimento de Documentos. Favor inserir outro Usuário ");
+			} else {
+				result.include("mensagemCabec", "A " + SigaMessages.getMessage("usuario.lotacao") + " informada está Suspensa para o recebimento de Documentos. Favor inserir outra " + SigaMessages.getMessage("usuario.lotacao"));
+			}
+			result.forwardTo(this).aTransferir(
+					sigla, idTpDespacho, tipoResponsavel, postback, dtMovString, subscritorSel,
+					substituicao, titularSel, nmFuncaoSubscritor, idResp, tiposDespacho, descrMov,
+					lotaResponsavelSel, responsavelSel, cpOrgaoSel, dtDevolucaoMovString, obsOrgao, protocolo);
+			return;
+		}
+
+		if (!Ex.getInstance().getComp()
+				.podeTramitarPara(getTitular(), getLotaTitular(), responsavelSel.getObjeto(), lotaResponsavelSel.getObjeto())) {
+			throw new AplicacaoException(
+					"Documento não pode ser tramitado para o destinário selecionado");
+		}
+
+		if (mov.getDtFimMov() != null && !Data.dataDentroSeculo21(mov.getDtFimMov()))
+			throw new AplicacaoException("Data de devolução inválida, deve estar entre o ano 2000 e ano 2100");
+
+
+		if(!Ex.getInstance().getConf().podePorConfiguracao(builder.getMob().getExDocumento().getExModelo(),CpTipoConfiguracao.TIPO_CONFIG_TRAMITAR_SEM_CAPTURADO)) {
+			Boolean podeTramitar = Boolean.FALSE;
+			Set<ExMobil> mobilsJuntados = builder.getMob().getDoc().getMobilDefaultParaReceberJuntada().getJuntados();
+
+			for (ExMobil exMobil : mobilsJuntados) {
+				if(exMobil.getDoc().isCapturado()) {
+					podeTramitar = Boolean.TRUE;
+					break;
+				}
+			}
+
+			if(!podeTramitar) {
+				result.include("msgCabecClass", "alert-danger");
+				result.include("mensagemCabec", "Para tramitar é necessário incluir um documento do tipo capturado.");
+				result.forwardTo(this).aTransferir(
+						sigla, idTpDespacho, tipoResponsavel, postback, dtMovString, subscritorSel,
+						substituicao, titularSel, nmFuncaoSubscritor, idResp, tiposDespacho, descrMov,
+						lotaResponsavelSel, responsavelSel, cpOrgaoSel, dtDevolucaoMovString, obsOrgao, protocolo);
+				return;
+			}
+		}
+
+		if (!(Ex.getInstance()
+				.getComp()
+				.podeTransferir(getTitular(), getLotaTitular(),
+						builder.getMob()) || Ex
+				.getInstance()
+				.getComp()
+				.podeDespachar(getTitular(), getLotaTitular(), builder.getMob()))) {
+			throw new AplicacaoException(
+					"Não é possível tramitar");
+		}
+
+		if(lotaResponsavelSel != null && lotaResponsavelSel.getObjeto() != null && !Cp.getInstance().getConf().podePorConfiguracao(
+				null, lotaResponsavelSel.getObjeto(),
+				CpTipoConfiguracao.TIPO_CONFIG_TRAMITAR_PARA_LOTACAO_SEM_USUARIOS_ATIVOS)) {
+			DpPessoaDaoFiltro filtro = new DpPessoaDaoFiltro();
+			filtro.setBuscarFechadas(Boolean.FALSE);
+			filtro.setNome("");
+			filtro.setLotacao(lotaResponsavelSel.getObjeto());
+			Integer qtde = CpDao.getInstance().consultarQuantidade(filtro);
+
+			if(qtde == 0) {
+				DpSubstituicao subst = new DpSubstituicao();
+				subst.setTitular(new DpPessoa());
+				subst.setLotaTitular(lotaResponsavelSel.getObjeto());
+
+				qtde += CpDao.getInstance().qtdeSubstituicoesAtivasPorTitular(subst);
+			}
+
+			if(qtde == 0) {
+				result.include("msgCabecClass", "alert-danger");
+				result.include("mensagemCabec", "A " + SigaMessages.getMessage("usuario.lotacao")
+						+ " informada não possui Usuário cadastrado ou ativo, para prosseguir com a tramitação informe outra " + SigaMessages.getMessage("usuario.lotacao"));
+				result.forwardTo(this).aTransferir(
+						sigla, idTpDespacho, tipoResponsavel, postback, dtMovString, subscritorSel,
+						substituicao, titularSel, nmFuncaoSubscritor, idResp, tiposDespacho, descrMov,
+						lotaResponsavelSel, responsavelSel, cpOrgaoSel, dtDevolucaoMovString, obsOrgao, protocolo);
+				return;
+
+			}
+		}
+
+		Ex.getInstance()
+				.getBL()
+				.transferir(mov.getOrgaoExterno(), mov.getObsOrgao(),
+						getCadastrante(), getLotaTitular(), builder.getMob(),
+						mov.getDtMov(), mov.getDtIniMov(), mov.getDtFimMov(),
+						mov.getLotaResp(), mov.getResp(),
+						mov.getLotaDestinoFinal(), mov.getDestinoFinal(),
+						mov.getSubscritor(), mov.getTitular(),
+						mov.getExTipoDespacho(), false, mov.getDescrMov(),
+						movimentacaoBuilder.getConteudo(),
+						mov.getNmFuncaoSubscritor(), false, false);
+
+		//ENVIAR PEN
+
+		EstruturaOrganizacional orgaoRemetente = new EstruturaOrganizacional();
+		orgaoRemetente.setIdentificacaoDoRepositorioDeEstruturas(new BigInteger("001"));
+		orgaoRemetente.setNumeroDeIdentificacaoDaEstrutura("5304");
+
+		EstruturaOrganizacional orgaoDestinatario = new EstruturaOrganizacional();
+		orgaoDestinatario.setIdentificacaoDoRepositorioDeEstruturas(BigInteger.valueOf(idEstruturaRepositorio));
+		orgaoDestinatario.setNumeroDeIdentificacaoDaEstrutura(String.valueOf(idEstrutura));
+
+		Produtor produtor = new Produtor();
+		produtor.setTipo("orgaopublico");
+		produtor.setNome("Infraero");
+
+
+		//PEGANDO TODOS OS DOCUMENTOS DO PROCESSO
+		boolean isProcesso = builder.getMob().getDoc().isProcesso();
+		ExMobil mob = builder.getMob();
+		if(isProcesso){
+			//mob = mob.getDoc().getUltimoVolume();
+		}else{
+			//mob = mob.getDoc().getPrimeiraVia();
+		}
+		mob.getArquivosNumerados();
+
+		//byte ab[] = mov.getConteudoBlobpdf();
+		byte ab[] = mob.getExDocumento().getConteudoBlobPdf();
+		File fileTemp = new File("/Users/tiagomeneses/Downloads/SEI_TEMP.pdf");
+		Files.write(fileTemp.toPath(), ab);
+		//ExDocumento doc = mob.getExDocumento();
+		//ab = doc.getConteudoBlobPdf();
+		String descricaoEspecie =  mob.getExDocumento().getExFormaDocumento().getDescricao();
+		String codEspeciePen =  mob.getExDocumento().getExFormaDocumento().getCodEspeciePen();
+		if(codEspeciePen == null || codEspeciePen.isEmpty()){
+			//lancar exception de negado para o tipo de documento
+		}
+		List<DocumentoDoProcesso> documentosProcesso = new ArrayList<>();
+
+		if(isProcesso){
+			Set<ExDocumento> docs = mob.getExDocumentoFilhoSet();
+			long ordem = 1;
+			for(ExDocumento doc : docs){
+				DocumentoDoProcesso documentoDoProcesso = montarDocumentoProcessoPen(doc, produtor, ordem);
+				documentosProcesso.add(documentoDoProcesso);
+				ordem++;
+			}
+		}else{
+			DocumentoDoProcesso documentoDoProcesso = montarDocumentoProcessoPen(mob.getExDocumento(), produtor, 1l);
+			documentosProcesso.add(documentoDoProcesso);
+		}
+
+
+
+		//TODOS OS DOCUMENTOS FILHOS
+/*		Set<ExDocumento> docs = mob.getExDocumentoFilhoSet();
+		List<DocumentoDoProcesso> documentosProcesso = new ArrayList<>();
+		long ordem = 1;
+		for(ExDocumento doc : docs){
+
+			ComponenteDigital arquivoDigital = new ComponenteDigital();
+			arquivoDigital.setNome(doc.getSigla() + ".pdf");
+
+			byte[] arquivoBytes = doc.getConteudoBlobPdf();
+			Hash hash = new Hash();
+			hash.setValue(IntegracaoPen.fileSha256ToBase64(arquivoBytes));
+			hash.setAlgoritmo("SHA256");
+			arquivoDigital.setHash(hash);
+
+			arquivoDigital.setTipoDeConteudo(TipoDeConteudo.TXT);
+			arquivoDigital.setMimeType(MimeType.APPLICATION_PDF);
+			arquivoDigital.setTamanhoEmBytes(arquivoBytes.length);
+			arquivoDigital.setOrdem(BigInteger.valueOf(ordem));
+			ordem++;
+
+			DocumentoDoProcesso documentoProcesso = new DocumentoDoProcesso();
+			documentoProcesso.getComponenteDigital().add(arquivoDigital);
+			documentoProcesso.setDescricao("Documento teste infraero");
+			documentoProcesso.setRetirado(false);
+			documentoProcesso.setOrdem(arquivoDigital.getOrdem());
+			documentoProcesso.setNivelDeSigilo(BigInteger.ONE);
+			documentoProcesso.setProdutor(produtor);
+
+			documentoProcesso.setDataHoraDeProducao(DatatypeFactory.newInstance().newXMLGregorianCalendar((GregorianCalendar) Calendar.getInstance()));
+			documentoProcesso.setDataHoraDeRegistro(DatatypeFactory.newInstance().newXMLGregorianCalendar((GregorianCalendar) Calendar.getInstance()));
+
+			codEspeciePen = doc.getExFormaDocumento().getCodEspeciePen();
+			if(codEspeciePen == null || codEspeciePen.isEmpty()){
+				//lancar exception de negado para o tipo de documento
+				throw new AplicacaoException("Espécie de documento não permitida para envio para o barramento do PEN");
+			}
+			Especie especie = new Especie();
+			especie.setCodigo(codEspeciePen);
+
+			especie.setNomeNoProdutor("Infraero");
+			documentoProcesso.setEspecie(especie);
+
+			documentosProcesso.add(documentoProcesso);
+		}*/
+
+
+		DadosTramiteDeProcessoCriado dadosTramite = integracaoPen.enviarProcessoAdministrativo(orgaoRemetente, orgaoDestinatario, 1, sigla, produtor, "Processo Infraero", documentosProcesso, null);
+		long ticket = dadosTramite.getTicketParaEnvioDeComponentesDigitais();
+		for(DocumentoDoProcesso documento : documentosProcesso){
+			for(ComponenteDigital componenteDigital : documento.getComponenteDigital()){
+				integracaoPen.uploadArquivoBinario(ticket, componenteDigital.getBytes(), MimeType.APPLICATION_PDF, sigla);
+			}
+
+		}
+
+		if (protocolo != null && protocolo.equals(OPCAO_MOSTRAR)) {
+			ExMovimentacao ultimaMovimentacao = builder.getMob()
+					.getUltimaMovimentacao();
+
+			if (SigaMessages.isSigaSP()) {
+				result.redirectTo("/app/expediente/mov/protocolo_unitario_sp?popup=false&sigla=" + sigla
+						+ "&id=" + ultimaMovimentacao.getIdMov());
+			} else {
+				result.redirectTo("/app/expediente/mov/protocolo_unitario?popup=false&sigla=" + sigla
+						+ "&id=" + ultimaMovimentacao.getIdMov());
+			}
+
+
+		} else {
+			ExDocumentoController.redirecionarParaExibir(result, builder.getMob().getExDocumento().getSigla());
+		}
+	}
+
+	private DocumentoDoProcesso montarDocumentoProcessoPen(ExDocumento doc, Produtor produtor, Long ordem) throws IOException, NoSuchAlgorithmException, DatatypeConfigurationException {
+		ComponenteDigital arquivoDigital = new ComponenteDigital();
+		arquivoDigital.setNome(doc.getSigla() + ".pdf");
+
+		byte[] arquivoBytes = doc.getConteudoBlobPdf();
+		Hash hash = new Hash();
+		hash.setValue(IntegracaoPen.fileSha256ToBase64(arquivoBytes));
+		hash.setAlgoritmo("SHA256");
+		arquivoDigital.setHash(hash);
+		arquivoDigital.setBytes(arquivoBytes);
+
+		arquivoDigital.setTipoDeConteudo(TipoDeConteudo.TXT);
+		arquivoDigital.setMimeType(MimeType.APPLICATION_PDF);
+		arquivoDigital.setTamanhoEmBytes(arquivoBytes.length);
+		arquivoDigital.setOrdem(BigInteger.valueOf(ordem));
+
+		DocumentoDoProcesso documentoProcesso = new DocumentoDoProcesso();
+		documentoProcesso.getComponenteDigital().add(arquivoDigital);
+		documentoProcesso.setDescricao("Documento Infraero");
+		documentoProcesso.setRetirado(false);
+		documentoProcesso.setOrdem(arquivoDigital.getOrdem());
+		documentoProcesso.setNivelDeSigilo(BigInteger.ONE);
+		documentoProcesso.setProdutor(produtor);
+
+		documentoProcesso.setDataHoraDeProducao(DatatypeFactory.newInstance().newXMLGregorianCalendar((GregorianCalendar) Calendar.getInstance()));
+		documentoProcesso.setDataHoraDeRegistro(DatatypeFactory.newInstance().newXMLGregorianCalendar((GregorianCalendar) Calendar.getInstance()));
+
+		String codEspeciePen = doc.getExFormaDocumento().getCodEspeciePen();
+		if(codEspeciePen == null || codEspeciePen.isEmpty()){
+			//lancar exception de negado para o tipo de documento
+			throw new AplicacaoException("Espécie de documento não permitida para envio para o barramento do PEN");
+		}
+		Especie especie = new Especie();
+		especie.setCodigo(codEspeciePen);
+
+		especie.setNomeNoProdutor("Infraero");
+		documentoProcesso.setEspecie(especie);
+
+		return documentoProcesso;
+	}
+
+
 
 	@Transacional
 	@Post("/app/expediente/mov/transferir_gravar")

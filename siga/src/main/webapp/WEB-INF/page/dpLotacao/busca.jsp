@@ -8,16 +8,16 @@
 <c:set var="propriedadeClean"
 	value="${fn:replace(param.propriedade,'.','')}" />
 
-<script type="text/javascript" language="Javascript1.1">
-	function sbmt(offset) {
-		if (offset == null) {
-			offset = 0;
-		}
+	<script type="text/javascript" language="Javascript1.1">
+		function sbmt(offset) {
+			if (offset == null) {
+				offset = 0;
+			}
 		frm.elements["paramoffset"].value = offset;
 		frm.elements["p.offset"].value = offset;
-		frm.submit();
-	}
-</script>
+			frm.submit();
+		}
+	</script>
 
 <c:choose>
 	<c:when test="${param.modal != true}">
@@ -42,10 +42,10 @@
 				<h5>Dados da <fmt:message key="usuario.lotacao"/></h5>
 			</div>
 			<div class="card-body">
-			<form name="frm" action="${request.contextPath}/app/lotacao/buscar" class="form" method="POST">
-				<input type="hidden" name="buscarFechadas" value="${param['buscarFechadas']}" /> 
-				<input type="hidden" name="propriedade" value="${param.propriedade}" /> 
-				<input type="hidden" name="postback" value="1" /> 
+	<form name="frm" action="${request.contextPath}/app/lotacao/buscar" class="form" method="POST">
+		<input type="hidden" name="buscarFechadas" value="${param['buscarFechadas']}" /> 
+		<input type="hidden" name="propriedade" value="${param.propriedade}" /> 
+		<input type="hidden" name="postback" value="1" /> 
 				<input type="hidden" name="paramoffset" value="0" />
 				<input type="hidden" name="p.offset" value="0" />
 				<input type="hidden" name="modal" value="${param['modal']}" />				
@@ -66,11 +66,11 @@
 									<c:forEach items="${orgaosUsu}" var="item">
 										<option value="${item.idOrgaoUsu}"
 											${item.idOrgaoUsu == idOrgaoUsu ? 'selected' : ''}>
-											${item.nmOrgaoUsu}
+											${item.acronimoOrgaoUsu} - ${item.nmOrgaoUsu}
 										</option>
 									</c:forEach>
 							</select>
-						</div>
+					</div>
 					</div>
 				</div>
 				<div class="row">
@@ -80,10 +80,10 @@
 						</div>
 					</div>
 				</div>
-			</form>
+	</form>
 			</div>
 		</div>
-		<br />
+	<br />
 
 		<table class="table table-sm table-striped">
 			<thead class="${thead_color}">
@@ -91,7 +91,7 @@
 					<th align="center">Sigla</th>
 					<th align="left">Nome</th>
 					<th>Fim de Vigência</th>
-				</tr>
+		</tr>
 			</thead>
 			<siga:paginador maxItens="10" maxIndices="10" totalItens="${tamanho}" itens="${itens}" var="item">
 				<tr class="${evenorodd}">

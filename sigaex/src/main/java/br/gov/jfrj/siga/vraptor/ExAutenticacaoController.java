@@ -41,6 +41,7 @@ import br.gov.jfrj.siga.ex.ExArquivo;
 import br.gov.jfrj.siga.ex.ExDocumento;
 import br.gov.jfrj.siga.ex.ExMobil;
 import br.gov.jfrj.siga.ex.ExMovimentacao;
+import br.gov.jfrj.siga.ex.ExNivelAcesso;
 import br.gov.jfrj.siga.ex.ExTipoMovimentacao;
 import br.gov.jfrj.siga.ex.bl.Ex;
 import br.gov.jfrj.siga.ex.vo.ExDocumentoVO;
@@ -130,6 +131,12 @@ public class ExAutenticacaoController extends ExController {
 		}
 
 		ExArquivo arq = Ex.getInstance().getBL().buscarPorNumeroAssinatura(n);
+		
+		String codigoDocBloqueado = null;
+		Long nivelAcesso = ((ExDocumento)arq).getExNivelAcessoAtual().getIdNivelAcesso();
+			if(nivelAcesso != ExNivelAcesso.ID_PUBLICO && nivelAcesso != ExNivelAcesso.NIVEL_ACESSO_PUBLICO)
+				codigoDocBloqueado = ((ExDocumento)arq).getSigla();
+			
 		Set<ExMovimentacao> assinaturas = arq.getAssinaturasDigitais();
 		boolean mostrarBotaoAssinarExterno = arq
 				.isCodigoParaAssinaturaExterna(n);
@@ -176,6 +183,7 @@ public class ExAutenticacaoController extends ExController {
 		result.include("assinaturaB64", assinaturaB64);
 		result.include("certificadoB64", certificadoB64);
 		result.include("atributoAssinavelDataHora", atributoAssinavelDataHora);
+		result.include("codigoDocBloqueado", codigoDocBloqueado);
 		result.forwardTo(this).arquivoAutenticado(buildJwtToken(n));
 	}
 

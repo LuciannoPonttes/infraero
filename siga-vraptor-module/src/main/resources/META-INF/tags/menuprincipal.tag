@@ -10,30 +10,30 @@
 			var name = cname + "=";
 			var ca = document.cookie.split(';');
 			var str = "";
-
+	
 			for (var i = 0; i < ca.length; i++) {
 				var c = ca[i];
 				while (c.charAt(0) == ' ') {
 					c = c.substring(1);
 				}
-
+				
 				if (c.indexOf(name) == 0) {
 					str = c.substring(name.length, c.length);
 				}
 			}
-
+	
 			if (str != "") {
-				var res = str.replace(/"/g, "");
-				if (res != null && res != "undefined") {
-					return res.split(';')[0].substring(25);
+		    	var res = str.replace(/"/g, "");
+		    	if (res != null && res != "undefined") {
+		    		return res.split(';')[0].substring(25);
 				}
-			}
+			}	
 
 			return "";
 		} catch (err) {
-			return "";
+			return "";    
 		}
-	}
+	}			
 </script>
 
 <li class="nav-item dropdown"><a href="javascript:void(0);"
@@ -69,33 +69,33 @@
 		<li class="dropdown-submenu"><a href="javascript:void(0);"
 			class="dropdown-item dropdown-toggle">Módulos</a>
 			<ul class="dropdown-menu">
-				<c:if
-					test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;DOC:Módulo de Documentos')}">
+					<c:if
+						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;DOC:Módulo de Documentos')}">
 					<li><a class="dropdown-item"
-						href="/sigaex/app/expediente/doc/listar?primeiraVez=sim">Documentos</a>
-					</li>
-				</c:if>
+							href="/sigaex/app/expediente/doc/listar?primeiraVez=sim">Documentos</a>
+						</li>
+					</c:if>
 
 				<c:if
 					test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;WF:Módulo de Workflow')}">
 					<li><a class="dropdown-item" href="/sigawf/app/ativos">Workflow</a></li>
 				</c:if>
 
-				<c:if
-					test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;SR')}">
+					<c:if
+						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;SR')}">
 					<li><a class="dropdown-item" href="/sigasr/">Serviços</a></li>
-				</c:if>
+					</c:if>
 
-				<c:if
-					test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GC:Módulo de Gestão de Conhecimento')}">
+					<c:if
+						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GC:Módulo de Gestão de Conhecimento')}">
 					<li><a class="dropdown-item"
 						href="/sigagc/app/estatisticaGeral">Gestão de Conhecimento</a></li>
-				</c:if>
+					</c:if>
 				<c:if
 					test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;TP:Módulo de Transportes')}">
 					<li><a class="dropdown-item" href="/sigatp/">Transportes</a></li>
 				</c:if>
-
+					
 				<c:if test="${!('ZZ'.equals(titular.orgaoUsuario.sigla))}">
 
 					<c:if
@@ -171,20 +171,20 @@
 								</c:if>
 							</ul></li>
 					</c:if>
-					<c:if
+							<c:if
 						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;PP:Agendamento de perícias do INSS')}">
 						<li class="dropdown-submenu"><a href="javascript:void(0);"
 							class="dropdown-item dropdown-toggle">Agendas</a>
 							<ul class="dropdown-menu">
 								<c:if
-									test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;PP')}">
+								test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;PP')}">
 									<li><a class="dropdown-item" href="/sigapp/">Perícias
 											Médicas</a></li>
-								</c:if>
+							</c:if>
 							</ul></li>
 					</c:if>
-				</c:if>
-
+                </c:if>
+                
 			</ul></li>
 		</c:if>
 		<c:if test="${f:resource('/siga.local') eq 'GOVSP'}">
@@ -238,7 +238,7 @@
 						</li>
 					</c:if>
 					 --%>
-				<c:choose>
+					 <c:choose>
 					<c:when
 						test="${(cadastrante.idPessoa != titular.idPessoa) || (cadastrante.lotacao.idLotacao != lotaTitular.idLotacao)}">
 						<%-- é uma substituição --%>
@@ -271,27 +271,27 @@
 
 
 
-		<c:if
+						<c:if
 			test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA:Sistema Integrado de Gestão Administrativa;GI:Módulo de Gestão de Identidade')}">
 			<li class="dropdown-submenu"><a href="javascript:void(0);"
 				class="dropdown-item dropdown-toggle">Gestão de Identidade</a>
 				<ul class="dropdown-menu">
 					<c:if
-						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;ID:Gerenciar identidades')}">
+							test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;ID:Gerenciar identidades')}">
 						<li><a class="dropdown-item"
 							href="/siga/app/gi/identidade/listar">Identidade</a></li>
-					</c:if>
-					<c:if
-						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;PERMISSAO:Gerenciar permissões')}">
+						</c:if>
+						<c:if
+							test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;PERMISSAO:Gerenciar permissões')}">
 						<li><a class="dropdown-item"
 							href="/siga/app/gi/acesso/listar">Configurar Permissões</a></li>
-					</c:if>
-					<c:if
-						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;PERFIL:Gerenciar perfis de acesso')}">
+						</c:if>
+						<c:if
+							test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;PERFIL:Gerenciar perfis de acesso')}">
 						<li><a class="dropdown-item"
 							href="/siga/app/gi/perfil/listar">Perfil de Acesso</a></li>
-					</c:if>
-					<c:if
+						</c:if>
+						<c:if
 						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;CAD_ORGAO_USUARIO:Cadastrar Orgãos Usuário')}">
 						<li><a class="dropdown-item"
 							href="/siga/app/orgaoUsuario/listar">Cadastro de Orgãos</a></li>
@@ -329,24 +329,24 @@
 							href="/sigawf/app/admin/administrar">Administrar SIGA WF</a></li>
 					</c:if>
 					<c:if
-						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;PERFILJEE:Gerenciar perfis do JEE')}">
+							test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;PERFILJEE:Gerenciar perfis do JEE')}">
 						<li><a class="dropdown-item"
 							href="/siga/app/gi/perfilJEE/listar">Perfil de Acesso do JEE</a></li>
-					</c:if>
-					<c:if
-						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;GDISTR:Gerenciar grupos de distribuição')
-							       || (f:podeGerirAlgumGrupo(titular,lotaTitular,2) && f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;GDISTR;DELEG:Gerenciar grupos de distribuição delegados'))}">
+						</c:if>
+						<c:if 						
+							test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;GDISTR:Gerenciar grupos de distribuição')
+							       || (f:podeGerirAlgumGrupo(titular,lotaTitular,2) && f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;GDISTR;DELEG:Gerenciar grupos de distribuição delegados'))}"> 	
 						<li><a class="dropdown-item"
 							href="${serverAndPort}/siga/app/gi/grupoDeEmail/listar">Grupo
 								de Distribuição</a></li>
-					</c:if>
-					<c:if
-						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;SELFSERVICE:Gerenciar serviços da própria lotação')}">
+						</c:if>
+						<c:if
+							test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;SELFSERVICE:Gerenciar serviços da própria lotação')}">
 						<li><a class="dropdown-item"
 							href="/siga/app/gi/servico/editar">Acesso a Serviços</a></li>
-					</c:if>
-					<c:if
-						test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;REL:Gerar relatórios')}">
+						</c:if>
+						<c:if
+							test="${f:podeUtilizarServicoPorConfiguracao(titular,lotaTitular,'SIGA;GI;REL:Gerar relatórios')}">
 						<li class="dropdown-submenu"><a href="javascript:void(0);"
 							class="dropdown-item dropdown-toggle">Relatórios</a>
 							<ul class="dropdown-menu">
@@ -362,10 +362,10 @@
 								<li><a class="dropdown-item"
 									href="/siga/app/gi/relatorio/selecionar_historico_usuario">Histórico
 										de Usuário</a></li>
-							</ul></li>
-					</c:if>
-				</ul></li>
-		</c:if>
+								</ul></li>
+						</c:if>
+					</ul></li>
+			</c:if>
 
 
 		<c:if
@@ -418,7 +418,7 @@
 			<li class="dropdown-submenu"><a href="javascript:void(0);"
 				class="dropdown-item dropdown-toggle">Substituir</a>
 				<div class="dropdown-menu">
-					<c:forEach var="substituicao" items="${meusTitulares}">
+				<c:forEach var="substituicao" items="${meusTitulares}">
 						<div class="dropdown-item" href="#">
 						<a class=""
 							href="javascript:delSession();location.href='/siga/app/substituicao/substituirGravar?id=${substituicao.idSubstituicao}'">
@@ -453,6 +453,11 @@
 								target="_blank">Manual</a>
 					</c:if>
 				</c:when>
+				<c:when test="${f:resource('siga.local') eq 'INFRAERO'}">
+					<a class="dropdown-item" id="apostilaSiga"
+						href="/siga/arquivos/MANUAL_SIGA_DOC_USUARIO.pdf"
+						target="_blank">Manual SIGA-Doc</a>
+				</c:when>
 				<c:otherwise>
 					<a class="dropdown-item" id="apostilaSiga"
 						href="/siga/arquivos/apostila_sigaex.pdf" target="_blank">Apostila
@@ -460,7 +465,7 @@
 
 				</c:otherwise>
 			</c:choose></li>
-
+		
 		<li><a class="dropdown-item" href="/siga/public/app/logout">Logoff</a></li>
 	</ul></li>
 

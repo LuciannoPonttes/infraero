@@ -18,6 +18,9 @@
  ******************************************************************************/
 package br.gov.jfrj.siga.gi.service.impl;
 
+import br.gov.jfrj.siga.gi.integracao.IntegracaoLdapViaWebService;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -32,8 +35,10 @@ import br.gov.jfrj.siga.base.AplicacaoException;
 import br.gov.jfrj.siga.base.GeraMessageDigest;
 import br.gov.jfrj.siga.base.Prop;
 import br.gov.jfrj.siga.base.Texto;
+import br.gov.jfrj.siga.base.util.Paginador;
 import br.gov.jfrj.siga.cp.CpIdentidade;
 import br.gov.jfrj.siga.cp.CpServico;
+import br.gov.jfrj.siga.cp.CpTipoIdentidade;
 import br.gov.jfrj.siga.cp.bl.Cp;
 import br.gov.jfrj.siga.cp.util.SigaUtil;
 import br.gov.jfrj.siga.cp.util.TokenException;
@@ -47,6 +52,7 @@ import br.gov.jfrj.siga.dp.dao.DpLotacaoDaoFiltro;
 import br.gov.jfrj.siga.dp.dao.DpPessoaDaoFiltro;
 import br.gov.jfrj.siga.gi.integracao.IntegracaoLdapViaWebService;
 import br.gov.jfrj.siga.gi.service.GiService;
+import br.gov.jfrj.siga.ldap.SigaLDAP;
 
 /**
  * Esta classe implementa os métodos de gestão de identidade O acesso à esta
@@ -58,7 +64,7 @@ import br.gov.jfrj.siga.gi.service.GiService;
  */
 @WebService(serviceName = "GiService", endpointInterface = "br.gov.jfrj.siga.gi.service.GiService", targetNamespace = "http://impl.service.gi.siga.jfrj.gov.br/")
 public class GiServiceImpl implements GiService {
-	
+
     private boolean autenticaViaBanco(CpIdentidade identidade, String senha) {
     	// caso o campo senha esteja vazio ou nulo, retorna false. 
     	// Não autentica usuários com senha em branco.
@@ -98,24 +104,55 @@ public class GiServiceImpl implements GiService {
     	return retorno;
     }
     
-    @Override
-    public String login(String matricula, String senha) {
+	@Override
+	public String login(String matricula, String senha) {
 		String resultado = "";
-
 		CpIdentidade id = null;
-		CpDao dao = CpDao.getInstance();
-		id = dao.consultaIdentidadeCadastrante(matricula, true);
-		String modoAut = buscarModoAutenticacao(id);
 
 		try {
-			if(modoAut.equals(_MODO_AUTENTICACAO_BANCO)) {
-				if (autenticaViaBanco(id, senha)) {
-					resultado = parseLoginResult(id);
+
+			String urlLdap = System.getProperty("idp.ldap.url");
+			String domain = System.getProperty("idp.ldap.domain");
+
+			CpDao dao = CpDao.getInstance();
+			if (urlLdap != null) {
+				boolean autenticado = SigaLDAP.authenticateJndi(matricula, senha, urlLdap, domain);
+				DpPessoa pessoa = dao.consultarDpPessoaPorLoginAD(matricula);
+
+				if (pessoa != null) {
+					List<CpIdentidade> l = dao.consultaIdentidades(pessoa);
+					for (CpIdentidade i : l) {
+						if (i.getCpTipoIdentidade().isTipoLdap()) {
+							id = i;
+							break;
+						}
+					}
+
+					if (id == null) {
+						id = new CpIdentidade();
+						id.setCpTipoIdentidade(dao.consultar(CpTipoIdentidade.LDAP, CpTipoIdentidade.class, false));
+						id.setCpOrgaoUsuario(pessoa.getOrgaoUsuario());
+						id.setDpPessoa(pessoa);
+						id.setDtCriacaoIdentidade(dao.consultarDataEHoraDoServidor());
+						id.setNmLoginIdentidade(matricula);
+						id.setHisDtIni(id.getDtCriacaoIdentidade());
+						id.setHisAtivo(1);
+						dao.iniciarTransacao();
+						dao.gravarComHistorico(id, null);
+						dao.commitTransacao();
+					}
 				}
-			} else if(modoAut.equals(_MODO_AUTENTICACAO_LDAP)) {
-				if(autenticaViaLdap(matricula, senha)) {
-					resultado = parseLoginResult(id);
-				}
+			} else {
+				DpPessoaDaoFiltro flt = new DpPessoaDaoFiltro();
+				flt.setSigla(matricula);
+
+				// DpPessoa p = (DpPessoa) dao.consultarPorSigla(flt);
+				id = dao.consultaIdentidadeCadastrante(matricula, true);
+				if (!autenticaViaBanco(id, senha))
+					id = null;
+			}
+			if (id != null) {
+				resultado = parseLoginResult(id);
 			}
 
 		} catch (AplicacaoException e) {
@@ -380,7 +417,86 @@ public class GiServiceImpl implements GiService {
 		}
 		return resultado;
 	}
+	
+	public String buscarPessoa(String nomePessoa, String siglaLotacao, Integer offset, Integer itemPagina){
+		if (nomePessoa != null){ 
+			nomePessoa = nomePessoa.toUpperCase();
+		}
+		
+		String retorno = "";
+		
+		try {
+			
+			CpDao dao = CpDao.getInstance();
 
+			final DpPessoaDaoFiltro flt = createFiltroPessoa(nomePessoa, siglaLotacao);
+			List<DpPessoa> itens = dao.consultarPorFiltro(flt, offset, itemPagina);
+			JSONArray pArray = new JSONArray();
+			for(DpPessoa pessoa : itens){
+				JSONObject p = new JSONObject();
+				p.put("nome", pessoa.getNomePessoa());
+				p.put("sigla", pessoa.getSigla());
+				p.put("id", pessoa.getId());
+				pArray.put(p);
+			}
+			
+			retorno = pArray.toString();
+			
+		}catch (Exception e) {
+			return "";
+		}
+
+		return retorno;
+	}
+	
+	private DpPessoaDaoFiltro createFiltroPessoa(String nomePessoa, String siglaLotacao) {
+		final DpPessoaDaoFiltro flt = new DpPessoaDaoFiltro();
+		flt.setNome(Texto.removeAcentoMaiusculas(nomePessoa));
+		if(siglaLotacao != null && !siglaLotacao.equals("")){
+			CpDao dao = CpDao.getInstance();
+			DpLotacao dpLotacao = new DpLotacao();
+			dpLotacao.setSigla(siglaLotacao);
+			DpLotacao lotacao = dao.consultarPorSigla(dpLotacao);
+			flt.setLotacao(lotacao);
+		}
+		
+		return flt;
+	}
+
+	@Override
+	public String buscarLotacao(String nomeLotacao, Integer offset, Integer itemPagina){
+		if (nomeLotacao != null){ 
+			nomeLotacao = nomeLotacao.toUpperCase();
+		}
+		
+		String retorno = "";
+		
+		try {
+			
+			CpDao dao = CpDao.getInstance();
+			
+			final DpLotacaoDaoFiltro flt = new DpLotacaoDaoFiltro();
+			flt.setNome(Texto.removeAcentoMaiusculas(nomeLotacao));
+			
+			List<DpLotacao> itens = dao.consultarPorFiltro(flt, offset, itemPagina);
+			JSONArray lArray = new JSONArray();
+			for(DpLotacao lotacao : itens){
+				JSONObject l = new JSONObject();
+				l.put("nome", lotacao.getNomeLotacao());
+				l.put("sigla", lotacao.getSigla());
+				l.put("id", lotacao.getId());
+				lArray.put(l);
+			}
+
+			retorno = lArray.toString();
+			
+		}catch (Exception e) {
+			return "";
+		}
+
+		return retorno;
+	}
+	
 	@Override
 	public String esqueciSenha(String cpf, String email) {
 		String resultado = "";

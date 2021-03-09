@@ -18,6 +18,8 @@
  ******************************************************************************/
 package br.gov.jfrj.siga.ex.service;
 
+import java.util.LinkedHashMap;
+
 import javax.jws.WebMethod;
 import javax.jws.WebService;
 
@@ -98,6 +100,14 @@ public interface ExService extends Remote {
     
     @WebMethod
     public String publicarDocumentoPortal(String siglaDocumento, String cadastranteStr, String marcadoresStr, String token) throws Exception;
+	
+	@WebMethod
+	public String assinarSenhaGravar(String sigla, final Boolean copia, final Boolean juntar, final Boolean tramitar, String nomeUsuarioSubscritor,
+			String senhaUsuarioSubscritor, String siglaCadastrante) throws Exception;
+	
+//	@WebMethod
+//	public byte[] getArquivo(String arquivo, String tipoArquivo);
+
 
 
     @WebMethod
@@ -135,4 +145,70 @@ public interface ExService extends Remote {
 
     @WebMethod
 	public Boolean isModeloIncluso(String codigoDocumentoVia, Long idModelo) throws Exception;
+	@WebMethod
+	public String finalizarDocumento(String sigla, String cadastrante) throws Exception;
+	
+	@WebMethod
+	public String anexarArquivo(String sigla, String cadastrante,
+			String nomeArquivo, String contentType, byte[] arquivo) throws Exception;
+	
+	@WebMethod
+	public Boolean excluirDocumento(String sigla, String titular) throws Exception;
+	
+	@WebMethod
+	public byte[] getConteudo(String sigla) throws Exception;
+	
+	@WebMethod
+	public String buscarDocsFilhos(String sigla) throws Exception;
+	
+	@WebMethod
+	public String atualizarConteudo(String siglaCadastrante, String sigla, String siglaMobilPai, String conteudo, Boolean finalizar) throws Exception;
+	
+	@WebMethod
+	public String incluirCossignatario(String sigla, String titular, String cossignatario, String funcaoCossignatario) throws Exception;
+	
+	@WebMethod
+	public String listarCossignatarios(String sigla, String titular) throws Exception;
+	
+	@WebMethod
+	public Boolean excluirMov(String sigla, String titular, Long idMov) throws Exception;
+	
+	@WebMethod
+	public byte[] getArquivo(String arquivo, boolean completo, boolean semMarcas) throws Exception;
+	
+	@WebMethod
+	public String consultarProcesso(String sigla) throws Exception;
+	
+	@WebMethod
+	public String buscarClassificacao(String descricao, String codigo, Integer offset, Integer itemPagina) throws Exception;
+	
+	@WebMethod
+	public String autenticarDocumento(String sigla, final Boolean juntar, final Boolean tramitar, String nomeUsuarioSubscritor,
+			String senhaUsuarioSubscritor, String siglaCadastrante) throws Exception;
+	
+	@WebMethod
+	public String criarDocumentoCapturado(String cadastranteStr, String destinatarioStr, String destinatarioCampoExtraStr, String descricaoTipoDeDocumento, String nomeForma ,String nomeModelo, String classificacaoStr, 
+			String descricaoStr, Boolean eletronico, String nomeNivelDeAcesso, String conteudo, String siglaMobilPai, Boolean finalizar, byte[] arquivo) throws Exception;
+	
+	@WebMethod
+	public String consultarQuantitativo(Long forma, Long idClassificacao, Long idOrgao, String destinatario, String lotacao,String dataInicial, String dataFinal) throws Exception;
+	
+	@WebMethod
+	public String detalharDocumento(String sigla) throws Exception;
+	
+	@WebMethod
+	public Boolean vincularPerfil(String sigla, String titular, String data, String responsavel, String lotacaoResponsavel, int tipoResponsavel, Long idPapel) throws Exception;
+	
+	@WebMethod
+	public Boolean cancelarMov(String cadastrante, String sigla, Long idMov, String dataMov, String motivo) throws Exception;
+	
+	@WebMethod
+	public String listarPerfilVinculado(String sigla, String titular) throws Exception;
+	
+	@WebMethod
+	public String criarAtualizarDocumento(String sigla, String cadastranteStr, String subscritorStr, String destinatarioStr, String destinatarioCampoExtraStr, String descricaoTipoDeDocumento, String nomeForma ,String nomeModelo, String classificacaoStr, 
+			String descricaoStr, Boolean eletronico, String nomeNivelDeAcesso, LinkedHashMap<String, String> campos, String siglaMobilPai, Boolean finalizar) throws Exception;
+	
+	
+	
 }

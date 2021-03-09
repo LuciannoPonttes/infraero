@@ -45,7 +45,7 @@ function sbmt(offset) {
 								<c:forEach items="${orgaosUsu}" var="item">
 									<option value="${item.idOrgaoUsu}"
 										${item.idOrgaoUsu == idOrgaoUsu ? 'selected' : ''}>
-										${item.nmOrgaoUsu}</option>
+										${item.acronimoOrgaoUsu} - ${item.nmOrgaoUsu}</option>
 								</c:forEach>
 							</select>
 						</div>

@@ -16,6 +16,7 @@
 		var dtNascimento = document.getElementsByName('dtNascimento')[0].value;
 		var cpf = document.getElementsByName('cpf')[0].value;
 		var email = document.getElementsByName('email')[0].value;
+		var tipoPessoa = document.getElementsByName('idTipoPessoa')[0].value;
 		var id = document.getElementsByName('id')[0].value;	
 		
 				
@@ -65,6 +66,12 @@
 		if(!validarEmail(document.getElementsByName('email')[0])) {			
 			sigaSpinner.ocultar();
 			document.getElementById("btnOk").disabled = false;
+			return;
+		}
+
+		if(tipoPessoa==null || tipoPessoa == 0){
+			mensagemAlerta("Preencha o tipo da pessoa.");
+			document.getElementById('tipoPessoa').focus();
 			return;
 		}
 
@@ -287,6 +294,24 @@
 								<input type="text" id="nmPessoaAbreviado" name="nomeExibicao" value="${nomeExibicao}" maxlength="60" class="form-control" data-toggle="tooltip"  data-placement="top" title="O campo nome abreviado só deverá ser preenchido caso o usuário opte por usar seu nome de registro civil com abreviação na assinatura dos documentos. Vale considerar que ainda sim no rodapé do documento será exibido seu nome completo." onkeyup="validarNome(this)"/>
 							</div>
 						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-2">
+						<div class="form-group">
+							<label for="idTipoPessoa">Tipo</label>
+							<select name="idTipoPessoa" value="${idTpPessoa}" class="form-control">
+								<c:forEach items="${listaTipoPessoa}" var="item">
+									<option value="${item.idTpPessoa}"
+										${item.idTpPessoa == idTpPessoa ? 'selected' : ''}>
+										${item.dscTpPessoa}</option>
+								</c:forEach>
+							</select>
+						</div>
+					</div>
+				</div>
+				<c:if test="${empty id}">
+					<div class="row">
 						<div class="col-md-2">
 							<div class="form-group">
 								<label for="nmPessoa">Data de Nascimento</label>

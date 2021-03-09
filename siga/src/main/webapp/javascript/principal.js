@@ -15,7 +15,7 @@ $(function() {
 		        	url: "/sigawf/app/inbox",
 		          viewId: "right"
 		        },
-		        sigasr: {
+		        /*sigasr: {
 		        	name: "sigasr",
 		        	url: "/sigasr/app/solicitacao/gadget", 
 		          viewId: "rightbottom"
@@ -29,7 +29,7 @@ $(function() {
 		        	name: "sigatp",
 		        	url: "/sigatp/app/application/gadget",
 		          viewId: "rightbottom3"
-		        },
+		        },*/
 		        processos: {
 		        	name: "processos",
 		        	url: "/sigaex/app/expediente/gadget?idTpFormaDoc=2",
