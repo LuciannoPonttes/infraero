@@ -38,6 +38,7 @@
 		<module>siga-jwt</module>
 		<!-- <module>siga-relarmaz</module> -->
 		<module>siga-oidc</module>
+		<module>siga-pen</module>
 		
 		
 	</modules>
@@ -300,6 +301,11 @@
 			<dependency>
 				<groupId>siga</groupId>
 				<artifactId>siga-oidc</artifactId>
+				<version>${siga.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>siga</groupId>
+				<artifactId>siga-pen</artifactId>
 				<version>${siga.version}</version>
 			</dependency>
 			<dependency>
