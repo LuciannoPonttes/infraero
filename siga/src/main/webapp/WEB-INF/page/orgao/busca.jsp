@@ -36,7 +36,7 @@
 			<input type="hidden" name="propriedade" value="${param.propriedade}" />
 			<input type="hidden" name="postback" value="1" /> <input
 				type="hidden" name="offset" value="0" />
-
+			<input type="hidden" name="idRepositorioEstrutura" value="${param.idRepositorioEstrutura}" />
 			<div class="card bg-light mb-3">
 				<div class="card-header">
 					<h5>Dados do Órgão Externo</h5>
@@ -70,9 +70,9 @@
 			<siga:paginador maxItens="10" maxIndices="10" totalItens="${tamanho}"
 				itens="${itens}" var="item">
 				<tr class="${evenorodd}">
-					<td width="10%" align="center"><a
+					<td width="30%" align="center"><a
 						href="javascript: ${parteFuncao}.retorna_${propriedadeClean}('${item.id}','${item.sigla}','${item.descricao}');">${item.sigla}</a></td>
-					<td width="90%" align="left">${item.descricao}</td>
+					<td width="70%" align="left">${item.descricao}</td>
 				</tr>
 			</siga:paginador>
 		</table>

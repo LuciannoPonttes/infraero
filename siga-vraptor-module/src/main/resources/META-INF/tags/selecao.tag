@@ -27,6 +27,7 @@
 <%@ attribute name="matricula" required="false"%>
 
 <%@ attribute name="requiredValue" required="false"%>
+<%@ attribute name="idRepositorioEstrutura" required="false" %>
 
 <c:if test="${propriedade != null}">
 	<c:set var="propriedade" value="${fn:replace(propriedade,'.','')}" />
@@ -210,7 +211,7 @@ var modalsimulawindow${propriedade} = 	function(url) {
 self.newwindow_${propriedade} = '';
 self.popitup_${propriedade}${tipoSel} = function(sigla) {
 
-	var url =  '/${urlPrefix}${urlBuscar}?propriedade=${propriedade}${tipoSel}&sigla='+encodeURI($.trim(sigla)) +'${selecaoParams}&modal=true';
+	var url =  '/${urlPrefix}${urlBuscar}?idRepositorioEstrutura=${idRepositorioEstrutura}&propriedade=${propriedade}${tipoSel}&sigla='+encodeURI($.trim(sigla)) +'${selecaoParams}&modal=true';
 	
 	newwindow_${propriedade} = modalsimulawindow${propriedade};
 	

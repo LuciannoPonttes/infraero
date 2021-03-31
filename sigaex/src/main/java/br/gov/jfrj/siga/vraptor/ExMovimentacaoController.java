@@ -39,8 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
-import br.gov.infraero.siga.pen.client.*;
-import br.gov.jfrj.itextpdf.Documento;
+import br.gov.infraero.siga.pen.client.model.*;
 import br.gov.jfrj.siga.dp.*;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1933,7 +1932,7 @@ public class ExMovimentacaoController extends ExController {
 							final DpLotacaoSelecao lotaResponsavelSel,
 							final DpPessoaSelecao responsavelSel,
 							final CpOrgaoSelecao cpOrgaoSel, final String dtDevolucaoMovString,
-							final String obsOrgao, final String protocolo, final Long idEstruturaRepositorio) {
+							final String obsOrgao, final String protocolo, final Long idEstruturaRepositorio, final String nomeOrgao) {
 
 		this.setPostback(postback);
 
@@ -1953,17 +1952,17 @@ public class ExMovimentacaoController extends ExController {
 		final ExMovimentacao ultMov = builder.getMob().getUltimaMovimentacao();
 
 		Integer tipoResponsavelFinal = Optional.fromNullable(tipoResponsavel)
-				.or(DEFAULT_TIPO_RESPONSAVEL);
+				.or(3);
 
 		if (getRequest().getAttribute("postback") == null) {
 			if (ultMov.getLotaDestinoFinal() != null) {
 				lotaResponsavelSelFinal.buscarPorObjeto(ultMov
 						.getLotaDestinoFinal());
-				tipoResponsavelFinal = 1;
+				tipoResponsavelFinal = 3;
 			}
 			if (ultMov.getDestinoFinal() != null) {
 				responsavelSelFinal.buscarPorObjeto(ultMov.getDestinoFinal());
-				tipoResponsavelFinal = 2;
+				tipoResponsavelFinal = 3;
 			}
 		}
 
@@ -2006,7 +2005,7 @@ public class ExMovimentacaoController extends ExController {
 		List<EstruturasEncontradas.Estrutura> estruturas = new ArrayList<>();
 
 		if(idEstruturaRepositorio != null && idEstruturaRepositorio != 0l){
-			estruturas = consultarEstruturas(idEstruturaRepositorio);
+			estruturas = consultarEstruturas(idEstruturaRepositorio, nomeOrgao);
 		}
 
 		result.include("listaEstrutura", estruturas);
@@ -2016,28 +2015,18 @@ public class ExMovimentacaoController extends ExController {
 	protected Map<String, String> getListaRepositorioEstruturaPen() {
 		final Map<String, String> map = new LinkedHashMap<String, String>();
 		List<RepositoriosEncontrados.Repositorio> repositorios = integracaoPen.listarRepositorioEstruturas();
-		//repositorios.sort(Comparator.comparing(RepositoriosEncontrados.Repositorio::getNome));
-		//System.out.println(repositorios);
-		//repositorios.sort(Comparator.comparing(repositorio -> repositorio.getNome()));
-/*		repositorios.sort(new Comparator<RepositoriosEncontrados.Repositorio>() {
-			@Override
-			public int compare(RepositoriosEncontrados.Repositorio r1, RepositoriosEncontrados.Repositorio r2) {
-				if(r1.getNome() == r2.getNome()){
-					return 0;
-				}
-				return r1.getNome().compareTo(r2.getNome());
-			}
-		});*/
 		for(RepositoriosEncontrados.Repositorio repositorio : repositorios){
 			map.put(repositorio.getId(), repositorio.getNome());
 		}
-		//repositorios.forEach(repositorio -> map.put(repositorio.getId(), repositorio.getNome()));
 		return map;
 	}
 
-	protected List<EstruturasEncontradas.Estrutura> consultarEstruturas(Long idRepositorioEstrutura) {
-		final Map<String, String> map = new LinkedHashMap<String, String>();
-		List<EstruturasEncontradas.Estrutura> estruturas = integracaoPen.consultarEstruturas(idRepositorioEstrutura);
+	protected List<EstruturasEncontradas.Estrutura> consultarEstruturas(Long idRepositorioEstrutura, String nome) {
+		FiltroDeEstruturas filtro = new FiltroDeEstruturas();
+		filtro.setIdentificacaoDoRepositorioDeEstruturas(BigInteger.valueOf(idRepositorioEstrutura));
+		filtro.setApenasAtivas(true);
+		filtro.setNome(nome);
+		List<EstruturasEncontradas.Estrutura> estruturas = integracaoPen.consultarEstruturas(filtro);
 		return estruturas;
 	}
 
@@ -2055,7 +2044,7 @@ public class ExMovimentacaoController extends ExController {
 								 final DpLotacaoSelecao lotaResponsavelSel,
 								 final DpPessoaSelecao responsavelSel,
 								 CpOrgaoSelecao cpOrgaoSel, final String dtDevolucaoMovString,
-								 final String obsOrgao, final String protocolo, final long idEstruturaRepositorio, final long idEstrutura) throws Exception {
+								 final String obsOrgao, final String protocolo, final long idEstruturaRepositorio, long idEstrutura) throws Exception {
 		this.setPostback(postback);
 
 		if(dtDevolucaoMovString != null && !"".equals(dtDevolucaoMovString.trim())) {
@@ -2097,14 +2086,17 @@ public class ExMovimentacaoController extends ExController {
 			}
 		}
 
-		EstruturasEncontradas.Estrutura estrutura = integracaoPen.consultarEstrutura(idEstruturaRepositorio, idEstrutura);
+		//EstruturasEncontradas.Estrutura estrutura = integracaoPen.consultarEstrutura(idEstruturaRepositorio, idEstrutura);
 
-		CpOrgao cpOrgao = CpDao.getInstance().getOrgaoFromSigla(estrutura.getSigla());
+		//CpOrgao cpOrgao = CpDao.getInstance().getOrgaoFromSigla(estrutura.getSigla());
+		CpOrgao cpOrgao = CpDao.getInstance().getOrgaoFromSigla(cpOrgaoSel.getSigla());
+
 		if(cpOrgao == null){
 			cpOrgao = new CpOrgao();
-			cpOrgao.setNmOrgao(estrutura.getNome());
+			cpOrgao.setNmOrgao(cpOrgaoSel.getDescricao());
 			cpOrgao.setHisAtivo(1);
-			cpOrgao.setSigla(estrutura.getSigla());
+			cpOrgao.setIdExterna(String.valueOf(cpOrgaoSel.getId()));
+			cpOrgao.setSigla(cpOrgaoSel.getSigla());
 
 		/*	CpOrgaoUsuario cpOrgaoUsuario = new CpOrgaoUsuario();
 			cpOrgaoUsuario.setIdOrgaoUsu(9999999999l);
@@ -2134,6 +2126,8 @@ public class ExMovimentacaoController extends ExController {
 			cpOrgaoSel.setId(cpOrgao.getId());
 			cpOrgaoSel.buscarPorId();
 		}
+
+		idEstrutura = Long.valueOf(cpOrgao.getIdExterna());
 
 		final ExMovimentacaoBuilder movimentacaoBuilder = ExMovimentacaoBuilder
 				.novaInstancia();
@@ -2267,7 +2261,6 @@ public class ExMovimentacaoController extends ExController {
 						mov.getNmFuncaoSubscritor(), false, false);
 
 		//ENVIAR PEN
-
 		EstruturaOrganizacional orgaoRemetente = new EstruturaOrganizacional();
 		orgaoRemetente.setIdentificacaoDoRepositorioDeEstruturas(new BigInteger("001"));
 		orgaoRemetente.setNumeroDeIdentificacaoDaEstrutura("5304");
@@ -2275,6 +2268,7 @@ public class ExMovimentacaoController extends ExController {
 		EstruturaOrganizacional orgaoDestinatario = new EstruturaOrganizacional();
 		orgaoDestinatario.setIdentificacaoDoRepositorioDeEstruturas(BigInteger.valueOf(idEstruturaRepositorio));
 		orgaoDestinatario.setNumeroDeIdentificacaoDaEstrutura(String.valueOf(idEstrutura));
+
 
 		Produtor produtor = new Produtor();
 		produtor.setTipo("orgaopublico");
@@ -2289,14 +2283,7 @@ public class ExMovimentacaoController extends ExController {
 		}else{
 			//mob = mob.getDoc().getPrimeiraVia();
 		}
-		mob.getArquivosNumerados();
 
-		//byte ab[] = mov.getConteudoBlobpdf();
-		byte ab[] = mob.getExDocumento().getConteudoBlobPdf();
-		File fileTemp = new File("/Users/tiagomeneses/Downloads/SEI_TEMP.pdf");
-		Files.write(fileTemp.toPath(), ab);
-		//ExDocumento doc = mob.getExDocumento();
-		//ab = doc.getConteudoBlobPdf();
 		String descricaoEspecie =  mob.getExDocumento().getExFormaDocumento().getDescricao();
 		String codEspeciePen =  mob.getExDocumento().getExFormaDocumento().getCodEspeciePen();
 		if(codEspeciePen == null || codEspeciePen.isEmpty()){
@@ -2317,56 +2304,7 @@ public class ExMovimentacaoController extends ExController {
 			documentosProcesso.add(documentoDoProcesso);
 		}
 
-
-
-		//TODOS OS DOCUMENTOS FILHOS
-/*		Set<ExDocumento> docs = mob.getExDocumentoFilhoSet();
-		List<DocumentoDoProcesso> documentosProcesso = new ArrayList<>();
-		long ordem = 1;
-		for(ExDocumento doc : docs){
-
-			ComponenteDigital arquivoDigital = new ComponenteDigital();
-			arquivoDigital.setNome(doc.getSigla() + ".pdf");
-
-			byte[] arquivoBytes = doc.getConteudoBlobPdf();
-			Hash hash = new Hash();
-			hash.setValue(IntegracaoPen.fileSha256ToBase64(arquivoBytes));
-			hash.setAlgoritmo("SHA256");
-			arquivoDigital.setHash(hash);
-
-			arquivoDigital.setTipoDeConteudo(TipoDeConteudo.TXT);
-			arquivoDigital.setMimeType(MimeType.APPLICATION_PDF);
-			arquivoDigital.setTamanhoEmBytes(arquivoBytes.length);
-			arquivoDigital.setOrdem(BigInteger.valueOf(ordem));
-			ordem++;
-
-			DocumentoDoProcesso documentoProcesso = new DocumentoDoProcesso();
-			documentoProcesso.getComponenteDigital().add(arquivoDigital);
-			documentoProcesso.setDescricao("Documento teste infraero");
-			documentoProcesso.setRetirado(false);
-			documentoProcesso.setOrdem(arquivoDigital.getOrdem());
-			documentoProcesso.setNivelDeSigilo(BigInteger.ONE);
-			documentoProcesso.setProdutor(produtor);
-
-			documentoProcesso.setDataHoraDeProducao(DatatypeFactory.newInstance().newXMLGregorianCalendar((GregorianCalendar) Calendar.getInstance()));
-			documentoProcesso.setDataHoraDeRegistro(DatatypeFactory.newInstance().newXMLGregorianCalendar((GregorianCalendar) Calendar.getInstance()));
-
-			codEspeciePen = doc.getExFormaDocumento().getCodEspeciePen();
-			if(codEspeciePen == null || codEspeciePen.isEmpty()){
-				//lancar exception de negado para o tipo de documento
-				throw new AplicacaoException("Espécie de documento não permitida para envio para o barramento do PEN");
-			}
-			Especie especie = new Especie();
-			especie.setCodigo(codEspeciePen);
-
-			especie.setNomeNoProdutor("Infraero");
-			documentoProcesso.setEspecie(especie);
-
-			documentosProcesso.add(documentoProcesso);
-		}*/
-
-
-		DadosTramiteDeProcessoCriado dadosTramite = integracaoPen.enviarProcessoAdministrativo(orgaoRemetente, orgaoDestinatario, 1, sigla, produtor, "Processo Infraero", documentosProcesso, null);
+		DadosTramiteDeProcessoCriado dadosTramite = integracaoPen.enviarProcessoAdministrativo(orgaoRemetente, orgaoDestinatario, 1, sigla, produtor, "Infraero", documentosProcesso, null);
 		long ticket = dadosTramite.getTicketParaEnvioDeComponentesDigitais();
 		for(DocumentoDoProcesso documento : documentosProcesso){
 			for(ComponenteDigital componenteDigital : documento.getComponenteDigital()){
@@ -2411,7 +2349,7 @@ public class ExMovimentacaoController extends ExController {
 
 		DocumentoDoProcesso documentoProcesso = new DocumentoDoProcesso();
 		documentoProcesso.getComponenteDigital().add(arquivoDigital);
-		documentoProcesso.setDescricao("Documento Infraero");
+		documentoProcesso.setDescricao(doc.getSigla());
 		documentoProcesso.setRetirado(false);
 		documentoProcesso.setOrdem(arquivoDigital.getOrdem());
 		documentoProcesso.setNivelDeSigilo(BigInteger.ONE);

@@ -411,6 +411,15 @@ public class ExMobilVO extends ExVO {
 				"enviar_pen",
 				Ex.getInstance().getComp()
 						.podeTransferirPen(titular, lotaTitular, mob));
+
+		//TODO cancelar tramite pen depende da implementacao da movimentao do PEN
+
+/*		addAcao("cancel",
+				"Cancelar Tramite PEN",
+				"/app/expediente/mov",
+				"cancelar_pen",
+				Ex.getInstance().getComp()
+						.podeCancelarTramitePen(titular, lotaTitular, mob));*/
 		
 		addAcao(AcaoVO.builder().nome("_Anotar").icone("note_add").acao("/app/expediente/mov/anotar")
 				.params("sigla", mob.getCodigoCompacto()).exp(new ExPodeAnotar(mob, titular, lotaTitular)).build());

@@ -110,6 +110,7 @@ $(function(){
 				<input type="hidden" name="sigla" value="${sigla}" id="transferir_gravar_sigla" />
 				<input type="hidden" name="mobilPaiSel.sigla" value="" id="transferir_gravar_pai" />
 				<input type="hidden" name="despachando" value="" id="transferir_gravar_despachando" />
+				<input type="hidden" name="tipoResponsavel" value="3" />
 
 				<c:if test="${not doc.eletronico}">
 				<div class="row">
@@ -123,7 +124,7 @@ $(function(){
 				</c:if>
 
 				<div class="row">
-					<div class="col col-6">
+					<div class="col col-3">
 						<div class="form-group">
 							<label>Repositório de Estruturas Organizacionais</label>
 							<select name="idEstruturaRepositorio" value="${idEstruturaRepositorio}" class="form-control" onchange="changeRepositorioEstrutura(this)">
@@ -135,10 +136,20 @@ $(function(){
 							</select> 
 						</div>
 					</div>
-					<div class="col col-6">
+					<div class="col col-9">
+						<div class="form-group">
+							<label>&nbsp;&nbsp;&nbsp;</label>
+							<c:choose>
+								<c:when test="${tipoResponsavel == 3}">
+									<siga:selecao propriedade="cpOrgao" idRepositorioEstrutura="${idEstruturaRepositorio}" tema="simple" modulo="siga"/>
+								</c:when>
+							</c:choose>
+						</div>
+					</div>
+<%--					<div class="col col-6">
 						<div class="form-group">
 							<label>Nome ou Sigla:</label>
-							<select name="idEstrutura" value="${idEstrutura}" class="form-control  siga-select2">
+							<select id="idEstrutura" name="idEstrutura" value="${idEstrutura}" class="form-control  siga-select2">
 								<c:forEach items="${listaEstrutura}" var="estrutura">
 									<option value="${estrutura.numeroDeIdentificacaoDaEstrutura}">
 											${estrutura.sigla} - ${estrutura.nome}
@@ -148,7 +159,7 @@ $(function(){
 							</select>
 
 						</div>
-					</div>
+					</div>--%>
 				</div>				
 <%--				<div class="row">
 					<div class="col col-3">

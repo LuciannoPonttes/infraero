@@ -20,8 +20,7 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 
-import br.gov.infraero.siga.pen.client.*;
-
+import br.gov.infraero.siga.pen.client.model.*;
 
 
 public class MainGuiaUtilizacao {
