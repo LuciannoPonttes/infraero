@@ -42,6 +42,8 @@ public class IntegracaoPen {
      * a acessar o ambiente.
      */
     private static final String KEYSTORE_PATH = PenProperties.getValue("pen.keystore_path");
+    private static final String TRUSTSTORE_PATH = PenProperties.getValue("pen.truststore_path");
+    private static final String TRUSTSTORE_PASSWORD = PenProperties.getValue("pen.truststore_password");
 
     private static final String PEN_SERVICE_QNAME = PenProperties.getValue("pen.service.qname");
     private static final String PEN_SERVICE_NAME = PenProperties.getValue("pen.service.name");
@@ -49,12 +51,24 @@ public class IntegracaoPen {
 
     private InteroperabilidadePEN interoperabilidadePEN;
 
+    public static void main(String args[]){
+        IntegracaoPen integracaoPen = new IntegracaoPen();
+        List<RepositoriosEncontrados.Repositorio> estruturas = integracaoPen.listarRepositorioEstruturas();
+        for(RepositoriosEncontrados.Repositorio respositorio : estruturas){
+            System.out.println(respositorio.getNome());
+        }
+    }
+
     private InteroperabilidadePEN getInteroperabilidadePEN(){
 
         if(this.interoperabilidadePEN == null){
             System.setProperty("javax.net.ssl.keyStoreType", "pkcs12");
             System.setProperty("javax.net.ssl.keyStore", KEYSTORE_PATH);
             System.setProperty("javax.net.ssl.keyStorePassword", KEYSTORE_PASSWORD);
+            System.setProperty("javax.net.ssl.trustStore", TRUSTSTORE_PATH);
+            System.setProperty("javax.net.ssl.trustStorePassword", TRUSTSTORE_PASSWORD);
+            System.setProperty("jdk.tls.client.protocols", "TLSv1");
+            System.setProperty("https.protocols", "TLSv1");
 
             try {
 
