@@ -8,6 +8,7 @@ import br.com.caelum.vraptor.tasks.Task;
 import br.com.caelum.vraptor.tasks.TaskContext;
 import br.com.caelum.vraptor.tasks.scheduler.Scheduled;
 import br.com.caelum.vraptor.validator.Validator;
+import br.com.caelum.vraptor.view.Results;
 import br.gov.infraero.siga.pen.client.NivelAcessoEnum;
 import br.gov.infraero.siga.pen.client.StatusPen;
 import br.gov.infraero.siga.pen.client.model.*;
@@ -52,7 +53,22 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Controller
-public class ReceberDocumentoPen {
+public class ReceberDocumentoPen extends ExController {
+
+    /**
+     * @deprecated CDI eyes only
+     */
+    public ReceberDocumentoPen() {
+        super();
+    }
+
+    @Inject
+    public ReceberDocumentoPen(HttpServletRequest request, HttpServletResponse response, ServletContext context,
+                            Result result, SigaObjects so, EntityManager em, Validator validator) {
+
+        super(request, response, context, result, ExDao.getInstance(), so, em);
+    }
+
 
     /**
      * Tempo de execução do schedule de receber documentos. Em milissegundos
@@ -142,6 +158,7 @@ public class ReceberDocumentoPen {
         }catch (Exception e){
             LOGGER.error(e.getMessage(), e);
         }
+        jsonSuccess("sucesso");
     }
 
     //RECEBER COMPONENTE DIGITAL
