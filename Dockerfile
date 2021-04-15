@@ -2,6 +2,13 @@
 FROM registry.infraero.gov.br/siga-base:10
 MAINTAINER diogorocha@infraero.gov.br
 
+ENV TZ=America/Sao_Paulo
+
+USER root
+#--- SET TIMEZONE
+RUN sh -c "ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone"
+
+USER jboss
 ADD modulos/sigadoc ${JBOSS_HOME}/modules/sigadoc
 
 #--- APLICACÕES WEB (siga) ---
