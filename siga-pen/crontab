@@ -1,0 +1,2 @@
+#Exemplo de job cron para chamada do serviço de receber documento do PEN
+*/3 * * * * curl -X POST http://localhost:8080/sigaex/public/app/pen/receberDocumentos >> ~/receberDocPEN_JOB.log 2>&1

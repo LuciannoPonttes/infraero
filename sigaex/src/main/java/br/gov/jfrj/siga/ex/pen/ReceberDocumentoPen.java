@@ -100,9 +100,8 @@ public class ReceberDocumentoPen extends ExController {
     }
 
     @Transacional
-    @Post("public/app/schedule")
-    @Scheduled(fixedRate = 180000)
-    public void receberDocumentosPen(){
+    @Post("public/app/pen/receberDocumentos")
+    public void receberDocumentosPen() throws Exception {
         FiltroDeConsultaDeTramites filtro = new FiltroDeConsultaDeTramites();
         EstruturaOrganizacional destinatario = new EstruturaOrganizacional();
         destinatario.setIdentificacaoDoRepositorioDeEstruturas(ID_ESTRUTURA);
@@ -152,11 +151,13 @@ public class ReceberDocumentoPen extends ExController {
 
                     }catch (Exception ex){
                         LOGGER.error(ex.getMessage(), ex);
+                        jsonError(ex);
                     }
                 }
             }
         }catch (Exception e){
             LOGGER.error(e.getMessage(), e);
+            jsonError(e);
         }
         jsonSuccess("sucesso");
     }
