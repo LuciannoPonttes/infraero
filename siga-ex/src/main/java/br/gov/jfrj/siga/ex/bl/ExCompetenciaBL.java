@@ -4501,6 +4501,35 @@ public class ExCompetenciaBL extends CpCompetenciaBL {
 				ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA,
 				CpTipoConfiguracao.TIPO_CONFIG_MOVIMENTAR);
 	}
+
+	public boolean podeCancelarTramitePen(final DpPessoa titular,
+										  final DpLotacao lotaTitular, final ExMobil mob){
+
+		ExMovimentacao mov = mob.getUltimaMovimentacaoNaoCancelada();
+		if(mov != null && mov.getIdTpMov().equals(ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA_EXTERNA)){
+			return true;
+		}
+		return false;
+	}
+
+	public boolean podeRecusarTramitePen(final DpPessoa titular,
+										  final DpLotacao lotaTitular, final ExMobil mob){
+
+		ExMovimentacao mov = mob.getUltimaMovimentacaoNaoCancelada();
+		if(mov != null && mov.getIdTpMov().equals(ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRAMITE_RECEBIMENTO_PEN)){
+			return true;
+		}
+		return false;
+	}
+	public boolean podeAceitarTramitePen(final DpPessoa titular,
+										  final DpLotacao lotaTitular, final ExMobil mob){
+
+		ExMovimentacao mov = mob.getUltimaMovimentacaoNaoCancelada();
+		if(mov != null && mov.getIdTpMov().equals(ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRAMITE_RECEBIMENTO_PEN)){
+			return true;
+		}
+		return false;
+	}
 	
 	public boolean podeSerTransferido(final ExMobil mob) {
 		if (mob.isPendenteDeAnexacao())

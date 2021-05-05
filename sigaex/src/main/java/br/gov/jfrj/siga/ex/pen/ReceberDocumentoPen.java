@@ -74,7 +74,6 @@ public class ReceberDocumentoPen extends ExController {
      * Tempo de execução do schedule de receber documentos. Em milissegundos
      *
      */
-    private static final String TIMER_SCHEDULE_RECEBER_PEN = PenProperties.getValue("pen.schedule.receber_processo");
     private static final String CADASTRANTE_SISTEMA = PenProperties.getValue("pen.cadastrante_sistema");
     private static final String LOTACAO_DESTINATARIO = PenProperties.getValue("pen.lotacao_destinatario");
 
@@ -90,77 +89,96 @@ public class ReceberDocumentoPen extends ExController {
     private final BigInteger ID_ESTRUTURA = BigInteger.valueOf(1l);
     private final String NUMERO_IDENTIFICACAO = "5304";
 
-    public void listarPendencias() throws Exception {
-        ListaDePendencias pendencias = integracaoPen.listarPendencias(null);
-        if(pendencias != null && pendencias.getIDT() != null){
-            for(ListaDePendencias.IDT idt : pendencias.getIDT()){
-                //idt.getStatus().intValue() == StatusPen.
-            }
-        }
-    }
-
     @Transacional
     @Post("public/app/pen/receberDocumentos")
-    public void receberDocumentosPen() throws Exception {
-        FiltroDeConsultaDeTramites filtro = new FiltroDeConsultaDeTramites();
-        EstruturaOrganizacional destinatario = new EstruturaOrganizacional();
-        destinatario.setIdentificacaoDoRepositorioDeEstruturas(ID_ESTRUTURA);
-        destinatario.setNumeroDeIdentificacaoDaEstrutura(NUMERO_IDENTIFICACAO);
-        filtro.setDestinatario(destinatario);
-        filtro.setSituacaoAtual(BigInteger.valueOf(StatusPen.ARQUIVOS_DIGITAIS_RECEBIDOS_SOLUCAO.getId().longValue()));
-        try{
-            TramitesEncontrados tramites = integracaoPen.consultarTramites(filtro);
-            if(tramites.getTotalDeRegistros() > 0l){
-                for(TramitesEncontrados.Tramite tramite : tramites.getTramite()){
-                    Long idt = tramite.getIDT();
-                    String nre = tramite.getNRE();
-                    try{
-                        Metadados metadados = integracaoPen.solicitarMetadados(idt);
-                        if(validateMetadados(metadados)){
-                            //PESQUISA REMETENTE PARA PEGAR O NOME
-                            EstruturasEncontradas.Estrutura estruturaRemetente = integracaoPen.consultarEstrutura(tramite.getRemetente().getIdentificacaoDoRepositorioDeEstruturas().longValue(), Long.valueOf(tramite.getRemetente().getNumeroDeIdentificacaoDaEstrutura()));
-
-                            Date dataProcesso =  metadados.getProcesso().getDataHoraDeRegistro() != null ? metadados.getProcesso().getDataHoraDeRegistro().toGregorianCalendar().getTime() : null;
-
-                            Integer nivelSigilo = NivelAcessoEnum.valueOf(metadados.getProcesso().getNivelDeSigilo().intValue()).getIdSiga();
-
-                            //CRIAR DOCUMENTO
-                            ExDocumento doc = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
-                                    null, "Externo Folha de Rosto", "Externo", "Documento Externo", "Auditoria externa",
-                                    null, true, nivelSigilo, null, null,
-                                    estruturaRemetente.getNome(), metadados.getProcesso().getProtocolo(), dataProcesso, true);
-
-                            List<String> hashesComponentes = new ArrayList<>();
-
-                            for(DocumentoDoProcesso docProcesso : metadados.getProcesso().getDocumento()){
-                                //TODO VERIFICAR QUANDO O PROCESSO TIVER MAIS DE UM COMPONENTE DIGIGAL
-                                String hashComponenteDigital = docProcesso.getComponenteDigital().get(0).getHash().getValue();
-                                DataHandler data = receberComponente(idt, hashComponenteDigital, tramite.getProtocolo());
-                                byte[] conteudo = IOUtils.toByteArray(data.getInputStream());
-                                anexarArquivoAuxiliar(doc.getSigla(), doc.getCadastrante(), docProcesso.getComponenteDigital().get(0), conteudo);
-
-                                hashesComponentes.add(hashComponenteDigital);
-                            }
-
-                            Collections.sort(hashesComponentes);
-                            integracaoPen.enviarReciboTramite(idt, nre, hashesComponentes);
-
-                        }else{
-                            //CANCELAR TRAMITE - por quanto nao existe cancelamento automatico
-                        }
-
-                    }catch (Exception ex){
-                        LOGGER.error(ex.getMessage(), ex);
-                        jsonError(ex);
-                    }
+    public void listarPendencias() throws Exception {
+        FiltroDePendencias filtro = new FiltroDePendencias();
+        filtro.setTodasAsPendencias(true);
+        ListaDePendencias pendencias = integracaoPen.listarPendencias(filtro);
+        if(pendencias != null && pendencias.getIDT() != null){
+            for(ListaDePendencias.IDT idt : pendencias.getIDT()){
+                if(idt.getStatus().intValue() == StatusPen.ARQUIVOS_DIGITAIS_RECEBIDOS_SOLUCAO.getId() || idt.getStatus().intValue() == StatusPen.METADADOS_RECEBIDOS_DESTINATARIO.getId() ){
+                    solicitarMetadadosCriarDocumento(idt.getValue());
+                }
+                if(idt.getStatus().intValue() == StatusPen.RECIBO_CONCLUSAO_TRAMITE_RECEB_SOLUCAO.getId()){
+                    //download recibo envio
+                }
+                if(idt.getStatus().intValue() == StatusPen.AGUARDANDO_CIENCIA.getId()){
+                    informarCienciaRecusa(idt.getValue());
                 }
             }
-        }catch (Exception e){
-            LOGGER.error(e.getMessage(), e);
-            jsonError(e);
         }
         jsonSuccess("sucesso");
     }
+
+    private void informarCienciaRecusa(Long idt){
+        try {
+            integracaoPen.cienciaRecusa(idt);
+        } catch (InteroperabilidadeException_Exception ex) {
+            LOGGER.error(ex.getMessage(), ex);
+        }
+    }
+
+    private TramitesEncontrados.Tramite getTramitePorIDT(Long idt){
+        FiltroDeConsultaDeTramites filtro = new FiltroDeConsultaDeTramites();
+        filtro.setIDT(idt);
+        TramitesEncontrados tramites = null;
+        try {
+            tramites = integracaoPen.consultarTramites(filtro);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getMessage(), ex);
+            return null;
+        }
+        return (tramites.getTramite() != null && !tramites.getTramite().isEmpty()) ? tramites.getTramite().get(0) : null;
+    }
+
+    private void solicitarMetadadosCriarDocumento(Long idt) throws Exception {
+        TramitesEncontrados.Tramite tramite = getTramitePorIDT(idt);
+
+        String nre = tramite.getNRE();
+        try{
+            Metadados metadados = integracaoPen.solicitarMetadados(idt);
+            if(validateMetadados(metadados)){
+                //PESQUISA REMETENTE PARA PEGAR O NOME
+                EstruturasEncontradas.Estrutura estruturaRemetente = integracaoPen.consultarEstrutura(tramite.getRemetente().getIdentificacaoDoRepositorioDeEstruturas().longValue(), Long.valueOf(tramite.getRemetente().getNumeroDeIdentificacaoDaEstrutura()));
+
+                Date dataProcesso =  metadados.getProcesso().getDataHoraDeRegistro() != null ? metadados.getProcesso().getDataHoraDeRegistro().toGregorianCalendar().getTime() : null;
+
+                Integer nivelSigilo = NivelAcessoEnum.valueOf(metadados.getProcesso().getNivelDeSigilo().intValue()).getIdSiga();
+
+                //CRIAR DOCUMENTO
+                ExDocumento doc = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
+                        null, "Externo Folha de Rosto", "Externo", "Documento Externo: Documento Externo", "Auditoria externa",
+                        null, true, nivelSigilo, null, null,
+                        estruturaRemetente.getNome(), metadados.getProcesso().getProtocolo(), dataProcesso, true);
+
+                List<String> hashesComponentes = new ArrayList<>();
+
+                for(DocumentoDoProcesso docProcesso : metadados.getProcesso().getDocumento()){
+                    //TODO VERIFICAR QUANDO O PROCESSO TIVER MAIS DE UM COMPONENTE DIGIGAL
+                    String hashComponenteDigital = docProcesso.getComponenteDigital().get(0).getHash().getValue();
+                    DataHandler data = receberComponente(idt, hashComponenteDigital, tramite.getProtocolo());
+                    byte[] conteudo = IOUtils.toByteArray(data.getInputStream());
+                    anexarArquivoAuxiliar(doc.getSigla(), doc.getCadastrante(), docProcesso.getComponenteDigital().get(0), conteudo);
+
+                    hashesComponentes.add(hashComponenteDigital);
+                }
+
+                Date dt = ExDao.getInstance().consultarDataEHoraDoServidor();
+                Ex.getInstance().getBL().receberPEN(doc.getCadastrante(), doc.getLotaCadastrante(), doc.getMobilGeral(), dt);
+
+                Collections.sort(hashesComponentes);
+                integracaoPen.enviarReciboTramite(idt, nre, hashesComponentes);
+
+            }
+
+        }catch (Exception ex){
+            LOGGER.error(ex.getMessage(), ex);
+        }
+
+
+    }
+
 
     //RECEBER COMPONENTE DIGITAL
     private DataHandler receberComponente(long idt, String hash, String protocolo) throws Exception {
@@ -522,79 +540,11 @@ public class ReceberDocumentoPen extends ExController {
             if(finalizar)
                 Ex.getInstance().getBL().finalizar(cadastrante, cadastrante.getLotacao(), doc);
 
+
             return doc;
         } catch (Exception e) {
             throw e;
         }
-    }
-
-    public void anexarDocumentoSiga(String sigla, ComponenteDigital componenteDigital, byte[] conteudo){
-
-        final ExMobilDaoFiltro filter = new ExMobilDaoFiltro();
-        filter.setSigla(sigla);
-
-        ExMobil mob = dao().consultarPorSigla(filter);
-
-        final ExMovimentacaoBuilder movimentacaoBuilder = ExMovimentacaoBuilder
-                .novaInstancia().setMob(mob)
-                .setSubstituicao(false).setSubscritorSel(null)
-                .setTitularSel(null).setDtMovString(null)
-                .setDescrMov(null).setContentType(componenteDigital.getMimeType().value())
-                .setFileName(componenteDigital.getNome());
-
-        final ExMovimentacao mov = movimentacaoBuilder.construir(dao());
-        mov.setSubscritor(null);
-        mov.setTitular(null);
-
-
-        Integer numBytes = 0;
-        final byte[] baArquivo = conteudo;
-
-        numBytes = baArquivo.length;
-        if (numBytes > 10 * 1024 * 1024) {
-            throw new AplicacaoException("Não é permitida a anexação de arquivos com mais de 10MB.");
-        }
-        mov.setConteudoBlobMov2(baArquivo);
-
-        Integer numPaginas = mov.getContarNumeroDePaginas();
-        if (mov.getContarNumeroDePaginas() == null
-                || mov.getArquivoComStamp() == null) {
-            throw new AplicacaoException(
-                    MessageFormat
-                            .format("O arquivo {0} está corrompido. Favor gera-lo novamente antes de anexar.",
-                                    componenteDigital.getNome()));
-        }
-
-        if (mob.isVolumeEncerrado()) {
-            throw new AplicacaoException(
-                    "Não é possível anexar arquivo em volume encerrado.");
-        }
-
-        if (!componenteDigital.getMimeType().value().equals("application/pdf")) {
-            throw new AplicacaoException(
-                    "Somente é permitido anexar arquivo PDF.");
-        }
-
-        try {
-            final byte[] ab = mov.getNmArqMov().getBytes();
-            for (int i = 0; i < ab.length; i++) {
-                if (ab[i] == -29) {
-                    ab[i] = -61;
-                }
-            }
-            final String sNmArqMov = new String(ab, "utf-8");
-
-            Ex.getInstance()
-                    .getBL()
-                    .anexarArquivo(null, null, mob,
-                            mov.getDtMov(), mov.getSubscritor(), sNmArqMov,
-                            mov.getTitular(), mov.getLotaTitular(),
-                            mov.getConteudoBlobMov2(), mov.getConteudoTpMov(),
-                            movimentacaoBuilder.getDescrMov(), null);
-        } catch (UnsupportedEncodingException ex) {
-            LOGGER.error(ex.getMessage(), ex);
-        }
-
     }
 
     public void anexarArquivoAuxiliar(String sigla, DpPessoa cadastrante, ComponenteDigital componenteDigital, byte[] conteudo){
@@ -654,40 +604,6 @@ public class ReceberDocumentoPen extends ExController {
         if(metadados.getProcesso() != null){
         }
         return true;
-    }
-
-
-    // Enviar o recibo de tramite para o remetente
-    //@Transacional
-    //@Post("public/app/pen/enviar_recibo_tramite")
-    //@Scheduled(fixedRate = 50000)
-    public void enviarReciboTramite(){
-        //TODO SE A ESTRUTURA HIERARQUICA DA INFRAERO TIVER ESTRUTURAS FILHAS, ESTE METODO TERA QUE SER REAVALIADO
-        FiltroDeConsultaDeTramites filtro = new FiltroDeConsultaDeTramites();
-        EstruturaOrganizacional destinatario = new EstruturaOrganizacional();
-        destinatario.setIdentificacaoDoRepositorioDeEstruturas(ID_ESTRUTURA);
-        destinatario.setNumeroDeIdentificacaoDaEstrutura(NUMERO_IDENTIFICACAO);
-        filtro.setDestinatario(destinatario);
-        filtro.setSituacaoAtual(BigInteger.valueOf(StatusPen.ARQUIVOS_DIGITAIS_RECEBIDOS_DESTINATARIO.getId().longValue()));
-
-        try{
-            TramitesEncontrados tramites = integracaoPen.consultarTramites(filtro);
-            if(tramites.getTotalDeRegistros() > 0l){
-                for(TramitesEncontrados.Tramite tramite : tramites.getTramite()){
-                    Long idt = tramite.getIDT();
-                    String nre = tramite.getNRE();
-                    List<String> hashes = tramite.getComponenteDigitalPendenteDeRecebimento();
-                    try{
-                        integracaoPen.enviarReciboTramite(idt, nre, hashes);
-                    }catch (Exception ex){
-                        LOGGER.error(ex.getMessage(), ex);
-                    }
-                }
-            }
-        }catch (Exception e){
-            LOGGER.error(e.getMessage(), e);
-
-        }
     }
 
 }

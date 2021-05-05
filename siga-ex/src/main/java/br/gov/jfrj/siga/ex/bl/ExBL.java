@@ -7640,6 +7640,109 @@ public class ExBL extends CpBL {
 		}
 	}
 
-	
+	public void receberPEN(final DpPessoa cadastrante, final DpLotacao lotaCadastrante, final ExMobil mob,
+						final Date dtMov) throws AplicacaoException {
+
+		SortedSet<ExMobil> set = mob.getMobilEApensosExcetoVolumeApensadoAoProximo();
+
+		try {
+			iniciarAlteracao();
+
+			for (ExMobil m : set) {
+
+				// Localiza a última movimentação de marcação de lotação, para cancelar ela com o recebimento
+				ExMovimentacao movAnterior = null;
+				List<ExMovimentacao> movs = mob.getMovimentacoesPorTipo(ExTipoMovimentacao.TIPO_MOVIMENTACAO_MARCACAO, true);
+				if (!mob.isGeral())
+					movs.addAll(m.doc().getMobilGeral().getMovimentacoesPorTipo(ExTipoMovimentacao.TIPO_MOVIMENTACAO_MARCACAO, true));
+				for (ExMovimentacao mov : movs) {
+					if (mov.getMarcador() != null && mov.getMarcador().getIdFinalidade().getIdTpMarcador() == CpTipoMarcadorEnum.TIPO_MARCADOR_LOTACAO
+							&& mov.getMarcador().getIdFinalidade().getIdTpMarcador() == CpTipoMarcadorEnum.TIPO_MARCADOR_LOTACAO
+							&& mov.getMarcador().getIdFinalidade().getIdTpInteressado() == CpMarcadorTipoInteressadoEnum.ATENDENTE) {
+						movAnterior = mov;
+						break;
+					}
+				}
+
+				final ExMovimentacao mov = criarNovaMovimentacao(ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRAMITE_RECEBIMENTO_PEN,
+						cadastrante, lotaCadastrante, m, dtMov, cadastrante, null, null, null, null);
+
+
+				if (movAnterior != null) {
+					mov.setExMovimentacaoRef(movAnterior);
+					gravarMovimentacaoCancelamento(mov, movAnterior);
+				} else
+					gravarMovimentacao(mov);
+
+				// Se houver configuração para restringir acesso somente para quem recebeu,
+				// remove a lotação das permissões de acesso e inclui o recebedor
+				if (Ex.getInstance().getConf().podePorConfiguracao(mov.getResp(), mov.getLotaResp(),
+						null, mob.doc().getExModelo().getExFormaDocumento(), mob.doc().getExModelo(),
+						CpTipoConfiguracao.TIPO_CONFIG_RESTRINGIR_ACESSO_APOS_RECEBER)) {
+					concluirAlteracaoParcial(m, true, mov.getResp(), mov.getLotaResp());
+				} else {
+					concluirAlteracaoParcial(m);
+				}
+			}
+			concluirAlteracao();
+		} catch (final Exception e) {
+			cancelarAlteracao();
+			throw new RuntimeException("Erro ao receber documento.", e);
+		}
+	}
+
+	public void aceitarTramitePEN(final DpPessoa cadastrante, final DpLotacao lotaCadastrante, final ExMobil mob,
+						   final Date dtMov) throws AplicacaoException {
+
+		SortedSet<ExMobil> set = mob.getMobilEApensosExcetoVolumeApensadoAoProximo();
+
+		try {
+			iniciarAlteracao();
+
+			for (ExMobil m : set) {
+
+				// Localiza a última movimentação de marcação de lotação, para cancelar ela com o recebimento
+				ExMovimentacao movAnterior = null;
+				List<ExMovimentacao> movs = mob.getMovimentacoesPorTipo(ExTipoMovimentacao.TIPO_MOVIMENTACAO_MARCACAO, true);
+				if (!mob.isGeral())
+					movs.addAll(m.doc().getMobilGeral().getMovimentacoesPorTipo(ExTipoMovimentacao.TIPO_MOVIMENTACAO_MARCACAO, true));
+				for (ExMovimentacao mov : movs) {
+					if (mov.getMarcador() != null && mov.getMarcador().getIdFinalidade().getIdTpMarcador() == CpTipoMarcadorEnum.TIPO_MARCADOR_LOTACAO
+							&& mov.getMarcador().getIdFinalidade().getIdTpMarcador() == CpTipoMarcadorEnum.TIPO_MARCADOR_LOTACAO
+							&& mov.getMarcador().getIdFinalidade().getIdTpInteressado() == CpMarcadorTipoInteressadoEnum.ATENDENTE) {
+						movAnterior = mov;
+						break;
+					}
+				}
+
+				final ExMovimentacao mov = criarNovaMovimentacao(ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_TRAMITE_PEN,
+						cadastrante, lotaCadastrante, m, dtMov, cadastrante, null, null, null, null);
+
+
+				if (movAnterior != null) {
+					mov.setExMovimentacaoRef(movAnterior);
+					gravarMovimentacaoCancelamento(mov, movAnterior);
+				} else
+					gravarMovimentacao(mov);
+
+				// Se houver configuração para restringir acesso somente para quem recebeu,
+				// remove a lotação das permissões de acesso e inclui o recebedor
+				if (Ex.getInstance().getConf().podePorConfiguracao(mov.getResp(), mov.getLotaResp(),
+						null, mob.doc().getExModelo().getExFormaDocumento(), mob.doc().getExModelo(),
+						CpTipoConfiguracao.TIPO_CONFIG_RESTRINGIR_ACESSO_APOS_RECEBER)) {
+					concluirAlteracaoParcial(m, true, mov.getResp(), mov.getLotaResp());
+				} else {
+					concluirAlteracaoParcial(m);
+				}
+			}
+			concluirAlteracao();
+		} catch (final Exception e) {
+			cancelarAlteracao();
+			throw new RuntimeException("Erro ao receber documento.", e);
+		}
+	}
+
+
+
 }
 

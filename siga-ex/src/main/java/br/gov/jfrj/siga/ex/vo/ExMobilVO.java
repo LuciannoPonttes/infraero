@@ -390,13 +390,13 @@ public class ExMobilVO extends ExVO {
 						.podeDesapensar(titular, lotaTitular, mob), null, null,
 				null, null, "once");
 
-		addAcao("email_open",
+/*		addAcao("email_open",
 				"Receber",
 				"/app/expediente/mov",
 				"receber",
 				Ex.getInstance().getComp()
 						.podeReceber(titular, lotaTitular, mob), null, null,
-				null, null, "once");
+				null, null, "once");*/
 		
 		addAcao("email_go",
 				"_Tramitar",
@@ -411,6 +411,20 @@ public class ExMobilVO extends ExVO {
 				"enviar_pen",
 				Ex.getInstance().getComp()
 						.podeTransferirPen(titular, lotaTitular, mob));
+
+		addAcao("overlays",
+				"Aceitar Tramite Externo",
+				"/app/expediente/mov",
+				"aceitar_tramite_pen",
+				Ex.getInstance().getComp()
+						.podeAceitarTramitePen(titular, lotaTitular, mob));
+
+		addAcao("cancel",
+				"Recusar Tramite Externo",
+				"/app/expediente/mov",
+				"recusar_tramite_pen",
+				Ex.getInstance().getComp()
+						.podeRecusarTramitePen(titular, lotaTitular, mob));
 
 		//TODO cancelar tramite pen depende da implementacao da movimentao do PEN
 
@@ -562,7 +576,7 @@ public class ExMobilVO extends ExVO {
 			listaMovimentacoesNaoCancelavel.add(ExTipoMovimentacao.TIPO_MOVIMENTACAO_ASSINATURA_POR_COM_SENHA);
 			listaMovimentacoesNaoCancelavel.add(ExTipoMovimentacao.TIPO_MOVIMENTACAO_GERAR_PROTOCOLO);
 			listaMovimentacoesNaoCancelavel.add(ExTipoMovimentacao.TIPO_MOVIMENTACAO_PUBLICACAO_PORTAL_TRANSPARENCIA);
-			
+			listaMovimentacoesNaoCancelavel.add(ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA_EXTERNA);
 			
 			if (!listaMovimentacoesNaoCancelavel.contains(ultimaMovNaoCancelada.get().getIdTpMov())) {
 				addAcao("arrow_undo",

@@ -43,7 +43,7 @@
 		<c:set var="descr" value="${listEstado[4].grupo.nome}" />
 		<c:if
 			test="${listEstado[0] != 9 && listEstado[0] != 8  && listEstado[0] != 10 
-			&& listEstado[0] != 11 && listEstado[0] != 12 
+			&& listEstado[0] != 12
 			&& listEstado[0] != 13 && listEstado[0] != 16
 			&& listEstado[0] != 18 && listEstado[0] != 20 
 			&& listEstado[0] != 21 && listEstado[0] != 22 
@@ -116,6 +116,20 @@
 				<c:when test="${listEstado[0]==25}">
 					<c:set var="titulo1"
 						value="Documentos pendentes de assinatura cujo subscritor é o usuário ${titular.nomePessoa}." />
+					<c:set var="titulo2" value="${titulo1}" />
+					<c:set var="titulo3" value="" />
+					<c:set var="ordem" value="1" />
+				</c:when>
+				<c:when test="${listEstado[0]==11}">
+					<c:set var="titulo1"
+						   value="Documentos Transferidos para Órgãos Externos." />
+					<c:set var="titulo2" value="${titulo1}" />
+					<c:set var="titulo3" value="" />
+					<c:set var="ordem" value="1" />
+				</c:when>
+				<c:when test="${listEstado[0]==2000}">
+					<c:set var="titulo1"
+						   value="Documentos Recebidos Orgãos Externos." />
 					<c:set var="titulo2" value="${titulo1}" />
 					<c:set var="titulo3" value="" />
 					<c:set var="ordem" value="1" />

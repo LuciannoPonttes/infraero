@@ -154,8 +154,20 @@ public class IntegracaoPen {
         return metadados;
     }
 
+    public void recusarTramite(Long idt, String motivo, String justificativa) throws Exception {
+        RecusaDeTramite recusa = new RecusaDeTramite();
+        recusa.setIDT(idt);
+        recusa.setMotivo(motivo);
+        recusa.setJustificativa(justificativa);
+        getInteroperabilidadePEN().recusarTramite(recusa);
+    }
+
     public DataHandler receberComponenteDigital(ParametrosParaRecebimentoDeComponenteDigital parametros) throws Exception {
         return getInteroperabilidadePEN().receberComponenteDigital(parametros);
+    }
+
+    public void cienciaRecusa(Long idt) throws InteroperabilidadeException_Exception {
+        getInteroperabilidadePEN().cienciaRecusa(idt);
     }
 
     public void enviarReciboTramite( long idt, String nre, List<String> hashesComponenteDigital) throws Exception {
@@ -204,11 +216,8 @@ public class IntegracaoPen {
     }
 
     public void downloadReciboTramite(long idt) throws Exception {
-
         ConteudoDoReciboDeTramite recibo = getInteroperabilidadePEN().receberReciboDeTramite(idt);
-
         System.out.println("Download do recibo efetuado com sucesso! Data de recebimento: " + recibo.getRecibo().getDataDeRecebimento());
-
     }
 
     public ConteudoDoReciboDeEnvio downloadReciboEnvio(long idt) throws InteroperabilidadeException_Exception {

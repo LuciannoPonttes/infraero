@@ -1695,6 +1695,54 @@ public class ExMovimentacaoController extends ExController {
 
 		result.redirectTo("/app/expediente/doc/exibir?sigla=" + sigla);
 	}
+
+	@Transacional
+	@Get("/app/expediente/mov/aceitar_tramite_pen")
+	public void aAceitarTramitePEN(final String sigla) {
+		final BuscaDocumentoBuilder builder = BuscaDocumentoBuilder
+				.novaInstancia().setSigla(sigla);
+		buscarDocumento(builder);
+
+		final ExMovimentacaoBuilder movBuilder = ExMovimentacaoBuilder
+				.novaInstancia();
+		final ExMovimentacao mov = movBuilder.construir(dao());
+
+		if (!Ex.getInstance().getComp()
+				.podeAceitarTramitePen(getTitular(), getLotaTitular(), builder.getMob())) {
+			throw new AplicacaoException("Documento não pode ser recebido");
+		}
+
+		Ex.getInstance()
+				.getBL()
+				.aceitarTramitePEN(getCadastrante(), getLotaTitular(), builder.getMob(),
+						mov.getDtMov());
+
+		result.redirectTo("/app/expediente/doc/exibir?sigla=" + sigla);
+	}
+
+	@Transacional
+	@Get("/app/expediente/mov/recusar_tramite_pen")
+	public void aRecusarTramitePEN(final String sigla) {
+		final BuscaDocumentoBuilder builder = BuscaDocumentoBuilder
+				.novaInstancia().setSigla(sigla);
+		buscarDocumento(builder);
+
+		final ExMovimentacaoBuilder movBuilder = ExMovimentacaoBuilder
+				.novaInstancia();
+		final ExMovimentacao mov = movBuilder.construir(dao());
+
+		if (!Ex.getInstance().getComp()
+				.podeRecusarTramitePen(getTitular(), getLotaTitular(), builder.getMob())) {
+			throw new AplicacaoException("Documento não pode ser recusado");
+		}
+
+		Ex.getInstance()
+				.getBL()
+				.aceitarTramitePEN(getCadastrante(), getLotaTitular(), builder.getMob(),
+						mov.getDtMov());
+
+		result.redirectTo("/app/expediente/doc/exibir?sigla=" + sigla);
+	}
 	
 	@Transacional
 	@Get("/app/expediente/mov/solicitar_assinatura")
@@ -2312,6 +2360,9 @@ public class ExMovimentacaoController extends ExController {
 			}
 
 		}
+
+		//DOWNLOAD RECIBO ENVIO
+		ConteudoDoReciboDeEnvio reciboEnvio = integracaoPen.downloadReciboEnvio(dadosTramite.getIDT());
 
 		if (protocolo != null && protocolo.equals(OPCAO_MOSTRAR)) {
 			ExMovimentacao ultimaMovimentacao = builder.getMob()
