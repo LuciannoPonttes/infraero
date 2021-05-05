@@ -214,11 +214,7 @@ public class ExTipoMovimentacao extends AbstractExTipoMovimentacao implements Se
 	
 	final static public long TIPO_MOVIMENTACAO_EXIBIR_NO_ACOMPANHAMENTO_DO_PROTOCOLO = 79;
 
-	final static public long TIPO_MOVIMENTACAO_TRAMITE_ENVIO_PEN = 80;
-
 	final static public long TIPO_MOVIMENTACAO_TRAMITE_RECEBIMENTO_PEN = 81;
-
-	final static public long TIPO_MOVIMENTACAO_RECIBO_RECUSA_PEN = 82;
 
 	final static public long TIPO_MOVIMENTACAO_RECIBO_TRAMITE_PEN = 83;
 	
