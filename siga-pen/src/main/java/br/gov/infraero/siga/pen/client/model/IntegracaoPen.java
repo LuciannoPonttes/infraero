@@ -215,9 +215,9 @@ public class IntegracaoPen {
 
     }
 
-    public void downloadReciboTramite(long idt) throws Exception {
+    public ConteudoDoReciboDeTramite downloadReciboTramite(long idt) throws Exception {
         ConteudoDoReciboDeTramite recibo = getInteroperabilidadePEN().receberReciboDeTramite(idt);
-        System.out.println("Download do recibo efetuado com sucesso! Data de recebimento: " + recibo.getRecibo().getDataDeRecebimento());
+        return recibo;
     }
 
     public ConteudoDoReciboDeEnvio downloadReciboEnvio(long idt) throws InteroperabilidadeException_Exception {

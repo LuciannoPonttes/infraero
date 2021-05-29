@@ -1,43 +1,37 @@
 package br.gov.jfrj.siga.ex.pen;
 
 import br.com.caelum.vraptor.Controller;
-import br.com.caelum.vraptor.Get;
 import br.com.caelum.vraptor.Post;
 import br.com.caelum.vraptor.Result;
-import br.com.caelum.vraptor.tasks.Task;
-import br.com.caelum.vraptor.tasks.TaskContext;
-import br.com.caelum.vraptor.tasks.scheduler.Scheduled;
 import br.com.caelum.vraptor.validator.Validator;
-import br.com.caelum.vraptor.view.Results;
+import br.gov.infraero.siga.pen.client.MotivoRecusaEnum;
 import br.gov.infraero.siga.pen.client.NivelAcessoEnum;
 import br.gov.infraero.siga.pen.client.StatusPen;
 import br.gov.infraero.siga.pen.client.model.*;
 import br.gov.infraero.siga.pen.client.util.PenProperties;
 import br.gov.jfrj.siga.base.AplicacaoException;
+import br.gov.jfrj.siga.base.Texto;
 import br.gov.jfrj.siga.cp.CpSituacaoConfiguracao;
 import br.gov.jfrj.siga.cp.CpTipoConfiguracao;
 import br.gov.jfrj.siga.dp.CpOrgao;
 import br.gov.jfrj.siga.dp.DpLotacao;
 import br.gov.jfrj.siga.dp.DpPessoa;
-import br.gov.jfrj.siga.dp.dao.CpDao;
 import br.gov.jfrj.siga.ex.*;
 import br.gov.jfrj.siga.ex.bl.Ex;
 import br.gov.jfrj.siga.ex.bl.ExConfiguracaoBL;
 import br.gov.jfrj.siga.ex.util.FuncoesEL;
 import br.gov.jfrj.siga.hibernate.ExDao;
+import br.gov.jfrj.siga.parser.PessoaLotacaoParser;
 import br.gov.jfrj.siga.persistencia.ExMobilDaoFiltro;
 import br.gov.jfrj.siga.vraptor.ExController;
 import br.gov.jfrj.siga.vraptor.SigaObjects;
 import br.gov.jfrj.siga.vraptor.Transacional;
-import br.gov.jfrj.siga.vraptor.builder.BuscaDocumentoBuilder;
 import br.gov.jfrj.siga.vraptor.builder.ExMovimentacaoBuilder;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.jboss.logging.Logger;
 
 import javax.activation.DataHandler;
-import javax.ejb.*;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.servlet.ServletContext;
@@ -48,8 +42,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URLEncoder;
-import java.text.MessageFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Controller
@@ -70,12 +62,17 @@ public class ReceberDocumentoPen extends ExController {
     }
 
 
-    /**
-     * Tempo de execução do schedule de receber documentos. Em milissegundos
-     *
-     */
     private static final String CADASTRANTE_SISTEMA = PenProperties.getValue("pen.cadastrante_sistema");
     private static final String LOTACAO_DESTINATARIO = PenProperties.getValue("pen.lotacao_destinatario");
+    private static final String PROCESSO_ADM_TIPO_DOC = PenProperties.getValue("pen.processoadm.tipodocumento");
+    private static final String PROCESSO_ADM_FORMA = PenProperties.getValue("pen.processoadm.forma");
+    private static final String PROCESSO_ADM_MODELO = PenProperties.getValue("pen.processoadm.modelo");
+    private static final String PROCESSO_ADM_CLASSIF = PenProperties.getValue("pen.processoadm.classificacao");
+    private static final String DOC_CAPTURADO_TIPO_DOC = PenProperties.getValue("pen.documentocapturado.tipodocumento");
+    private static final String DOC_CAPTURADO_FORMA = PenProperties.getValue("pen.documentocapturado.forma");
+    private static final String DOC_CAPTURADO_MODELO = PenProperties.getValue("pen.documentocapturado.modelo");
+    private static final String DOC_CAPTURADO_CLASSIF = PenProperties.getValue("pen.documentocapturado.classificacao");
+
 
 
     protected  ExDao dao() {
@@ -97,11 +94,18 @@ public class ReceberDocumentoPen extends ExController {
         ListaDePendencias pendencias = integracaoPen.listarPendencias(filtro);
         if(pendencias != null && pendencias.getIDT() != null){
             for(ListaDePendencias.IDT idt : pendencias.getIDT()){
-                if(idt.getStatus().intValue() == StatusPen.ARQUIVOS_DIGITAIS_RECEBIDOS_SOLUCAO.getId() || idt.getStatus().intValue() == StatusPen.METADADOS_RECEBIDOS_DESTINATARIO.getId() ){
+                if(idt.getStatus().intValue() == StatusPen.ARQUIVOS_DIGITAIS_RECEBIDOS_SOLUCAO.getId() || idt.getStatus().intValue() == StatusPen.METADADOS_RECEBIDOS_DESTINATARIO.getId() || idt.getStatus().intValue() == StatusPen.ARQUIVOS_DIGITAIS_RECEBIDOS_DESTINATARIO.getId()){
                     solicitarMetadadosCriarDocumento(idt.getValue());
                 }
                 if(idt.getStatus().intValue() == StatusPen.RECIBO_CONCLUSAO_TRAMITE_RECEB_SOLUCAO.getId()){
-                    //download recibo envio
+                    ExDocumento exDocumento = consultarDocumentPorIDT(String.valueOf(idt.getValue()));
+                    if(exDocumento != null){
+                        ConteudoDoReciboDeTramite reciboTramite = integracaoPen.downloadReciboTramite(idt.getValue());
+                        if(reciboTramite != null){
+                            String descMov = "Recibo tramite NRE: " + reciboTramite.getRecibo().getNRE() + " - IDT: " + reciboTramite.getRecibo().getIDT();
+                            Ex.getInstance().getBL().criarMovimentaoPEN(exDocumento.getCadastrante(), exDocumento.getLotaCadastrante(), exDocumento.getMobilGeral(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_TRAMITE_PEN);
+                        }
+                    }
                 }
                 if(idt.getStatus().intValue() == StatusPen.AGUARDANDO_CIENCIA.getId()){
                     informarCienciaRecusa(idt.getValue());
@@ -138,47 +142,86 @@ public class ReceberDocumentoPen extends ExController {
         String nre = tramite.getNRE();
         try{
             Metadados metadados = integracaoPen.solicitarMetadados(idt);
-            if(validateMetadados(metadados)){
+            MotivoRecusaEnum motivoRecusa = validarMetadados(metadados);
+            if(motivoRecusa == null){
                 //PESQUISA REMETENTE PARA PEGAR O NOME
                 EstruturasEncontradas.Estrutura estruturaRemetente = integracaoPen.consultarEstrutura(tramite.getRemetente().getIdentificacaoDoRepositorioDeEstruturas().longValue(), Long.valueOf(tramite.getRemetente().getNumeroDeIdentificacaoDaEstrutura()));
 
                 Date dataProcesso =  metadados.getProcesso().getDataHoraDeRegistro() != null ? metadados.getProcesso().getDataHoraDeRegistro().toGregorianCalendar().getTime() : null;
+                Date dataProducao = metadados.getProcesso().getDataHoraDeProducao() != null ? metadados.getProcesso().getDataHoraDeProducao().toGregorianCalendar().getTime() : null;
 
                 Integer nivelSigilo = NivelAcessoEnum.valueOf(metadados.getProcesso().getNivelDeSigilo().intValue()).getIdSiga();
 
                 //CRIAR DOCUMENTO
+                LinkedHashMap<String, String> campos = new LinkedHashMap<>();
+                campos.put("protocolo", metadados.getProcesso().getProtocolo());
+                campos.put("nre", nre);
+                campos.put("descricao_proc", metadados.getProcesso().getDescricao());
+                campos.put("nivel_sigilo", NivelAcessoEnum.valueOf(metadados.getProcesso().getNivelDeSigilo().intValue()).toString());
+                campos.put("nome_produtor", metadados.getProcesso().getProdutor().getNome());
+                campos.put("unidade_produtor", metadados.getProcesso().getProdutor().getUnidade() != null ? metadados.getProcesso().getProdutor().getUnidade().getNome() : "Não Informado");
+                campos.put("data_hora_producao", DateFormatUtils.format(dataProducao, "dd/MM/yyyy HH:mm"));
+                campos.put("data_hora_registro", DateFormatUtils.format(dataProcesso, "dd/MM/yyyy HH:mm"));
+                //NAO EXITE NO PEN campos.put("data_hora_encerramento", null);
+                String interessado = metadados.getProcesso().getInteressado() != null && !metadados.getProcesso().getInteressado().isEmpty() ? metadados.getProcesso().getInteressado().get(0).getNome() : "";
+                campos.put("nome_interessado", interessado);
+                String numDocIDT = idt.toString();
                 ExDocumento doc = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
-                        null, "Externo Folha de Rosto", "Externo", "Documento Externo: Documento Externo", "Auditoria externa",
-                        null, true, nivelSigilo, null, null,
-                        estruturaRemetente.getNome(), metadados.getProcesso().getProtocolo(), dataProcesso, true);
+                        null, PROCESSO_ADM_TIPO_DOC, PROCESSO_ADM_FORMA, PROCESSO_ADM_MODELO, PROCESSO_ADM_CLASSIF,
+                        null, true, nivelSigilo, campos, null,
+                        estruturaRemetente.getNome(), numDocIDT, dataProcesso, true, null);
 
                 List<String> hashesComponentes = new ArrayList<>();
 
                 for(DocumentoDoProcesso docProcesso : metadados.getProcesso().getDocumento()){
-                    //TODO VERIFICAR QUANDO O PROCESSO TIVER MAIS DE UM COMPONENTE DIGIGAL
                     String hashComponenteDigital = docProcesso.getComponenteDigital().get(0).getHash().getValue();
                     DataHandler data = receberComponente(idt, hashComponenteDigital, tramite.getProtocolo());
                     byte[] conteudo = IOUtils.toByteArray(data.getInputStream());
-                    anexarArquivoAuxiliar(doc.getSigla(), doc.getCadastrante(), docProcesso.getComponenteDigital().get(0), conteudo);
+                    //CRIAR DOCUMENTO
+                    LinkedHashMap<String, String> camposDocCapturado = new LinkedHashMap<>();
+                    camposDocCapturado.put("especie", docProcesso.getEspecie().getNomeNoProdutor());
+                    String numDoc = docProcesso.getIdentificacao() != null ? String.valueOf(docProcesso.getIdentificacao().getNumero()) : null;
+                    if(numDoc == null){
+                        numDoc = docProcesso.getProtocoloDoDocumentoAnexado() != null ? docProcesso.getProtocoloDoDocumentoAnexado() : null;
+                        if (numDoc == null) {
+                            numDoc = docProcesso.getProdutor() != null ? docProcesso.getProdutor().getNumeroDeIdentificacao() : null;
+                        }
+                    }
+                    camposDocCapturado.put("numerodoc", numDoc);
+                    Date dataRegistro = docProcesso.getDataHoraDeRegistro() != null ? docProcesso.getDataHoraDeRegistro().toGregorianCalendar().getTime() : null;
+                    camposDocCapturado.put("DataOriginal", DateFormatUtils.format(dataRegistro, "dd/MM/yyyy HH:mm"));
+                    camposDocCapturado.put("remetente", docProcesso.getProdutor().getNome());
+                    camposDocCapturado.put("assunto", docProcesso.getDescricao());
+                    //Nao possui camposDocCapturado.put("info_comp", docProcesso.getIdentificacao() != null ? docProcesso.getIdentificacao().getComplemento() : null);
+                    ExDocumento docCapturado = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
+                            null, DOC_CAPTURADO_TIPO_DOC, DOC_CAPTURADO_FORMA, DOC_CAPTURADO_MODELO, DOC_CAPTURADO_CLASSIF,
+                            null, true, nivelSigilo, camposDocCapturado, doc.getSigla(),
+                            estruturaRemetente.getNome(), null, dataProcesso, true, conteudo);
+
+                    Boolean juntado = juntar(docCapturado.getSigla(), doc.getSigla(), doc.getLotaDestinatario().getSiglaDePessoaEOuLotacao(), doc.getLotaCadastrante().getSiglaDePessoaEOuLotacao());
+
+                    LOGGER.info("Documento [" +docCapturado.getSigla()+ "] juntado? ["+ juntado+ "]");
 
                     hashesComponentes.add(hashComponenteDigital);
                 }
 
                 Date dt = ExDao.getInstance().consultarDataEHoraDoServidor();
-                Ex.getInstance().getBL().receberPEN(doc.getCadastrante(), doc.getLotaCadastrante(), doc.getMobilGeral(), dt);
+                String descMov = "Processo Recibo PEN - Protocolo: " + metadados.getProcesso().getProtocolo() + " - NRE: " + nre + " - IDT: " + idt;
+                Ex.getInstance().getBL().receberPEN(doc.getCadastrante(), doc.getLotaCadastrante(), doc.getMobilGeral(), dt, descMov);
 
                 Collections.sort(hashesComponentes);
                 integracaoPen.enviarReciboTramite(idt, nre, hashesComponentes);
+
+            }else{
+                //RECUSAR TRAMITE
+                integracaoPen.recusarTramite(idt, motivoRecusa.getCodigo(), motivoRecusa.getDescricao());
 
             }
 
         }catch (Exception ex){
             LOGGER.error(ex.getMessage(), ex);
         }
-
-
     }
-
 
     //RECEBER COMPONENTE DIGITAL
     private DataHandler receberComponente(long idt, String hash, String protocolo) throws Exception {
@@ -212,7 +255,7 @@ public class ReceberDocumentoPen extends ExController {
                                           String descricaoTipoDeDocumento, String nomeForma,
                                           String nomeModelo, String classificacaoStr, String descricaoStr,
                                           Boolean eletronico, Integer idNivelDeAcesso,
-                                          LinkedHashMap<String, String> campos, String siglaMobilPai, String obsOrgao, String numDoc, Date dtDocumento, Boolean finalizar) throws Exception {
+                                          LinkedHashMap<String, String> campos, String siglaMobilPai, String obsOrgao, String numDoc, Date dtDocumento, Boolean finalizar, byte[] arquivo) throws Exception {
 
         try {
             DpPessoa cadastrante = null;
@@ -317,6 +360,33 @@ public class ReceberDocumentoPen extends ExController {
                 eletronico = true;
             } else if (idSit == ExSituacaoConfiguracao.SITUACAO_PROIBIDO) {
                 eletronico = false;
+            }
+
+            // Insere PDF de documento capturado
+            //
+            if (arquivo != null) {
+
+                Integer numBytes = null;
+                try {
+
+                    numBytes = arquivo.length;
+                    if (numBytes > 10 * 1024 * 1024) {
+                        throw new AplicacaoException(
+                                "Não é permitida a anexação de arquivos com mais de 10MB.");
+                    }
+                    doc.setConteudoBlobPdf(arquivo);
+                    doc.setConteudoBlobHtml(null);
+                } catch (IOException e) {
+                    throw new AplicacaoException("Falha ao manipular aquivo",
+                            1, e);
+                }
+
+                Integer numPaginas = doc.getContarNumeroDePaginas();
+                if (numPaginas == null || doc.getArquivoComStamp() == null) {
+                    throw new AplicacaoException("O arquivo está corrompido.");
+                }
+
+
             }
 
             if(idNivelDeAcesso == null) {
@@ -510,7 +580,7 @@ public class ReceberDocumentoPen extends ExController {
                             }
                             if (!FuncoesEL.contemTagHTML(parametro)) {
                                 if (parametro.contains("\"")) {
-                                    parametro = parametro.replace("\"", "&quot;");
+                                    parametro = parametro.replace("\"", "");
                                 }
                             }
 
@@ -521,17 +591,6 @@ public class ReceberDocumentoPen extends ExController {
                     doc.setConteudoTpDoc("application/zip");
                     doc.setConteudoBlobForm(baos.toByteArray());
                 }
-            }
-
-            String conteudo = null;
-
-            if (conteudo == null)
-                conteudo = "";
-            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                baos.write(conteudo.getBytes());
-
-                doc.setConteudoTpDoc("application/zip");
-                doc.setConteudoBlobForm(baos.toByteArray());
             }
 
             doc = Ex.getInstance()
@@ -599,11 +658,99 @@ public class ReceberDocumentoPen extends ExController {
         }
     }
 
-    //TODO por enquanto nao existe nenhuma regra de validacao ao receber
-    public boolean validateMetadados(Metadados metadados){
+    public MotivoRecusaEnum validarMetadados(Metadados metadados){
         if(metadados.getProcesso() != null){
+            for(DocumentoDoProcesso documento : metadados.getProcesso().getDocumento()){
+                if(documento.getComponenteDigital() == null || documento.getComponenteDigital().isEmpty()){
+                    return MotivoRecusaEnum.FALTA_COMPONENTE;
+                }
+                for(ComponenteDigital componenteDigital : documento.getComponenteDigital()){
+                    if(!validarMimeTypes(componenteDigital.getMimeType().value())){
+                        return MotivoRecusaEnum.FORMATO_NAO_SUPORTADO;
+                    }
+
+                    if(componenteDigital.getTamanhoEmBytes() < 1){
+                        return MotivoRecusaEnum.COMPONENTE_CORROMPIDO;
+                    }
+
+                    if(!validarTamanhoArquivo(componenteDigital.getTamanhoEmBytes())){
+                        return MotivoRecusaEnum.OUTRO;
+                    }
+                }
+            }
         }
-        return true;
+        return null;
+    }
+
+    private boolean validarTamanhoArquivo(long tamanho){
+        Integer fileMaxSize = Integer.valueOf(PenProperties.getValue("pen.file.maxsize"));
+        if(tamanho > fileMaxSize){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
+    private boolean validarMimeTypes(String mimeType){
+        String mimeTypes = PenProperties.getValue("pen.file.accepted_mimetypes");
+        String[] mimeTypesArray = mimeTypes.split(",");
+        for(String m : mimeTypesArray){
+            if(m.equalsIgnoreCase(mimeType)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+/*    private void transferir(){
+        Ex.getInstance()
+                .getBL()
+                .transferir(mov.getOrgaoExterno(), mov.getObsOrgao(),
+                        getCadastrante(), getLotaTitular(), builder.getMob(),
+                        mov.getDtMov(), mov.getDtIniMov(), mov.getDtFimMov(),
+                        mov.getLotaResp(), mov.getResp(),
+                        mov.getLotaDestinoFinal(), mov.getDestinoFinal(),
+                        mov.getSubscritor(), mov.getTitular(),
+                        mov.getExTipoDespacho(), false, mov.getDescrMov(),
+                        movimentacaoBuilder.getConteudo(),
+                        mov.getNmFuncaoSubscritor(), false, false);
+    }*/
+
+    private Boolean juntar(String codigoDocumentoViaFilho,
+                          String codigoDocumentoViaPai, String siglaDestino,
+                          String siglaCadastrante) throws Exception {
+        try {
+            ExMobil mobFilho = buscarMobil(codigoDocumentoViaFilho);
+            ExMobil mobPai = buscarMobil(codigoDocumentoViaPai);
+
+            PessoaLotacaoParser cadastranteParser = new PessoaLotacaoParser(
+                    siglaCadastrante);
+            PessoaLotacaoParser destinoParser = new PessoaLotacaoParser(
+                    siglaDestino);
+
+            Ex.getInstance()
+                    .getBL()
+                    .juntarDocumento(cadastranteParser.getPessoa(),
+                            cadastranteParser.getPessoa(),
+                            cadastranteParser.getLotacao(), null, mobFilho,
+                            mobPai, null, destinoParser.getPessoa(),
+                            destinoParser.getPessoa(), "1");
+            return true;
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+            return false;
+        }
+    }
+
+    private ExDocumento consultarDocumentPorIDT(String idt){
+        final ExMobilDaoFiltro flt = new ExMobilDaoFiltro();
+        flt.setNumExtDoc(idt);
+        List<Object[]> mobils = dao().consultarPorFiltroOtimizado(flt);
+        if(mobils != null && !mobils.isEmpty()){
+            ExDocumento doc = (ExDocumento)mobils.get(0)[0];
+            return doc;
+        }
+        return null;
     }
 
 }

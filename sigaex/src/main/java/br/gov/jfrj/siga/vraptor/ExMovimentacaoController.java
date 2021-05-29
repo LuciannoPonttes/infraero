@@ -2326,11 +2326,6 @@ public class ExMovimentacaoController extends ExController {
 		//PEGANDO TODOS OS DOCUMENTOS DO PROCESSO
 		boolean isProcesso = builder.getMob().getDoc().isProcesso();
 		ExMobil mob = builder.getMob();
-		if(isProcesso){
-			//mob = mob.getDoc().getUltimoVolume();
-		}else{
-			//mob = mob.getDoc().getPrimeiraVia();
-		}
 
 		String descricaoEspecie =  mob.getExDocumento().getExFormaDocumento().getDescricao();
 		String codEspeciePen =  mob.getExDocumento().getExFormaDocumento().getCodEspeciePen();
@@ -2360,9 +2355,13 @@ public class ExMovimentacaoController extends ExController {
 			}
 
 		}
-
 		//DOWNLOAD RECIBO ENVIO
 		ConteudoDoReciboDeEnvio reciboEnvio = integracaoPen.downloadReciboEnvio(dadosTramite.getIDT());
+		ExDocumento doc = builder.getMob().getExDocumento();
+		String descMov = "Recibo envio NRE: " + reciboEnvio.getReciboDeEnvio().getNRE() + " - IDT: " + reciboEnvio.getReciboDeEnvio().getIDT();
+		Ex.getInstance().getBL().criarMovimentaoPEN(getCadastrante(), getLotaCadastrante(), doc.getMobilGeral(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_ENVIO_PEN);
+		doc.setNumExtDoc(String.valueOf(reciboEnvio.getReciboDeEnvio().getIDT()));
+		dao().gravar(doc);
 
 		if (protocolo != null && protocolo.equals(OPCAO_MOSTRAR)) {
 			ExMovimentacao ultimaMovimentacao = builder.getMob()
