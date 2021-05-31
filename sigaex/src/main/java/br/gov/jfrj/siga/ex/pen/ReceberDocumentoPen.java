@@ -10,7 +10,6 @@ import br.gov.infraero.siga.pen.client.StatusPen;
 import br.gov.infraero.siga.pen.client.model.*;
 import br.gov.infraero.siga.pen.client.util.PenProperties;
 import br.gov.jfrj.siga.base.AplicacaoException;
-import br.gov.jfrj.siga.base.Texto;
 import br.gov.jfrj.siga.cp.CpSituacaoConfiguracao;
 import br.gov.jfrj.siga.cp.CpTipoConfiguracao;
 import br.gov.jfrj.siga.dp.CpOrgao;
@@ -94,21 +93,25 @@ public class ReceberDocumentoPen extends ExController {
         ListaDePendencias pendencias = integracaoPen.listarPendencias(filtro);
         if(pendencias != null && pendencias.getIDT() != null){
             for(ListaDePendencias.IDT idt : pendencias.getIDT()){
+                TramitesEncontrados.Tramite tramite = getTramitePorIDT(idt.getValue());
                 if(idt.getStatus().intValue() == StatusPen.ARQUIVOS_DIGITAIS_RECEBIDOS_SOLUCAO.getId() || idt.getStatus().intValue() == StatusPen.METADADOS_RECEBIDOS_DESTINATARIO.getId() || idt.getStatus().intValue() == StatusPen.ARQUIVOS_DIGITAIS_RECEBIDOS_DESTINATARIO.getId()){
                     solicitarMetadadosCriarDocumento(idt.getValue());
                 }
                 if(idt.getStatus().intValue() == StatusPen.RECIBO_CONCLUSAO_TRAMITE_RECEB_SOLUCAO.getId()){
-                    ExDocumento exDocumento = consultarDocumentPorIDT(String.valueOf(idt.getValue()));
-                    if(exDocumento != null){
-                        ConteudoDoReciboDeTramite reciboTramite = integracaoPen.downloadReciboTramite(idt.getValue());
-                        if(reciboTramite != null){
+                    ExDocumento exDocumento = consultarProcessoPorNRE(tramite.getNRE());
+                    ConteudoDoReciboDeTramite reciboTramite = integracaoPen.downloadReciboTramite(idt.getValue());
+                    if(exDocumento != null && reciboTramite != null){
                             String descMov = "Recibo tramite NRE: " + reciboTramite.getRecibo().getNRE() + " - IDT: " + reciboTramite.getRecibo().getIDT();
-                            Ex.getInstance().getBL().criarMovimentaoPEN(exDocumento.getCadastrante(), exDocumento.getLotaCadastrante(), exDocumento.getMobilGeral(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_TRAMITE_PEN);
-                        }
+                            Ex.getInstance().getBL().criarMovimentacaoPEN(exDocumento.getCadastrante(), exDocumento.getLotaCadastrante(), exDocumento.getUltimoVolume(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_TRAMITE_PEN);
                     }
                 }
                 if(idt.getStatus().intValue() == StatusPen.AGUARDANDO_CIENCIA.getId()){
                     informarCienciaRecusa(idt.getValue());
+                    ExDocumento exDocumento = consultarProcessoPorNRE(tramite.getNRE());
+                    if(exDocumento != null){
+                        String descMov = "Tramite recusado - Motivo: " + tramite.getMotivoDaRecusa() + " - Justificativa: " + tramite.getJustificativaDaRecusa();
+                        Ex.getInstance().getBL().criarMovimentacaoPEN(exDocumento.getCadastrante(), exDocumento.getLotaCadastrante(), exDocumento.getUltimoVolume(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECUSA_TRAMITE_PEN);
+                    }
                 }
             }
         }
@@ -144,70 +147,97 @@ public class ReceberDocumentoPen extends ExController {
             Metadados metadados = integracaoPen.solicitarMetadados(idt);
             MotivoRecusaEnum motivoRecusa = validarMetadados(metadados);
             if(motivoRecusa == null){
+
                 //PESQUISA REMETENTE PARA PEGAR O NOME
                 EstruturasEncontradas.Estrutura estruturaRemetente = integracaoPen.consultarEstrutura(tramite.getRemetente().getIdentificacaoDoRepositorioDeEstruturas().longValue(), Long.valueOf(tramite.getRemetente().getNumeroDeIdentificacaoDaEstrutura()));
 
-                Date dataProcesso =  metadados.getProcesso().getDataHoraDeRegistro() != null ? metadados.getProcesso().getDataHoraDeRegistro().toGregorianCalendar().getTime() : null;
-                Date dataProducao = metadados.getProcesso().getDataHoraDeProducao() != null ? metadados.getProcesso().getDataHoraDeProducao().toGregorianCalendar().getTime() : null;
+                ExDocumento exDocProcesso = consultarProcessoPorNRE(nre);
+                Date dtServidor = ExDao.getInstance().consultarDataEHoraDoServidor();
 
-                Integer nivelSigilo = NivelAcessoEnum.valueOf(metadados.getProcesso().getNivelDeSigilo().intValue()).getIdSiga();
+                if(exDocProcesso == null){
+                    Date dataProcesso =  metadados.getProcesso().getDataHoraDeRegistro() != null ? metadados.getProcesso().getDataHoraDeRegistro().toGregorianCalendar().getTime() : null;
+                    Date dataProducao = metadados.getProcesso().getDataHoraDeProducao() != null ? metadados.getProcesso().getDataHoraDeProducao().toGregorianCalendar().getTime() : null;
 
-                //CRIAR DOCUMENTO
-                LinkedHashMap<String, String> campos = new LinkedHashMap<>();
-                campos.put("protocolo", metadados.getProcesso().getProtocolo());
-                campos.put("nre", nre);
-                campos.put("descricao_proc", metadados.getProcesso().getDescricao());
-                campos.put("nivel_sigilo", NivelAcessoEnum.valueOf(metadados.getProcesso().getNivelDeSigilo().intValue()).toString());
-                campos.put("nome_produtor", metadados.getProcesso().getProdutor().getNome());
-                campos.put("unidade_produtor", metadados.getProcesso().getProdutor().getUnidade() != null ? metadados.getProcesso().getProdutor().getUnidade().getNome() : "Não Informado");
-                campos.put("data_hora_producao", DateFormatUtils.format(dataProducao, "dd/MM/yyyy HH:mm"));
-                campos.put("data_hora_registro", DateFormatUtils.format(dataProcesso, "dd/MM/yyyy HH:mm"));
-                //NAO EXITE NO PEN campos.put("data_hora_encerramento", null);
-                String interessado = metadados.getProcesso().getInteressado() != null && !metadados.getProcesso().getInteressado().isEmpty() ? metadados.getProcesso().getInteressado().get(0).getNome() : "";
-                campos.put("nome_interessado", interessado);
-                String numDocIDT = idt.toString();
-                ExDocumento doc = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
-                        null, PROCESSO_ADM_TIPO_DOC, PROCESSO_ADM_FORMA, PROCESSO_ADM_MODELO, PROCESSO_ADM_CLASSIF,
-                        null, true, nivelSigilo, campos, null,
-                        estruturaRemetente.getNome(), numDocIDT, dataProcesso, true, null);
+                    Integer nivelSigilo = NivelAcessoEnum.valueOf(metadados.getProcesso().getNivelDeSigilo().intValue()).getIdSiga();
+
+                    //CRIAR DOCUMENTO
+                    LinkedHashMap<String, String> campos = new LinkedHashMap<>();
+                    campos.put("tipo_processo", metadados.getProcesso().getProcessoDeNegocio());
+                    campos.put("protocolo", metadados.getProcesso().getProtocolo());
+                    campos.put("nre", nre);
+                    campos.put("descricao_proc", metadados.getProcesso().getDescricao());
+                    campos.put("nivel_sigilo", NivelAcessoEnum.valueOf(metadados.getProcesso().getNivelDeSigilo().intValue()).toString());
+                    campos.put("nome_produtor", metadados.getProcesso().getProdutor().getNome());
+                    campos.put("unidade_produtor", metadados.getProcesso().getProdutor().getUnidade() != null ? metadados.getProcesso().getProdutor().getUnidade().getNome() : "Não Informado");
+                    campos.put("data_hora_producao", DateFormatUtils.format(dataProducao, "dd/MM/yyyy HH:mm"));
+                    campos.put("data_hora_registro", DateFormatUtils.format(dataProcesso, "dd/MM/yyyy HH:mm"));
+                    //NAO EXITE NO PEN campos.put("data_hora_encerramento", null);
+                    String interessado = metadados.getProcesso().getInteressado() != null && !metadados.getProcesso().getInteressado().isEmpty() ? metadados.getProcesso().getInteressado().get(0).getNome() : "";
+                    campos.put("nome_interessado", interessado);
+                    String numDocNRE = nre;
+                    exDocProcesso = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
+                            null, PROCESSO_ADM_TIPO_DOC, PROCESSO_ADM_FORMA, PROCESSO_ADM_MODELO, PROCESSO_ADM_CLASSIF,
+                            null, true, nivelSigilo, campos, null,
+                            estruturaRemetente.getNome(), numDocNRE, dataProcesso, true, null);
+                }else{
+                    //Necessario para que possa ocorrer a juntada de novos documentos à um processo que voltou do PEN
+                    ExMobil mobil = buscarMobil(exDocProcesso.getSigla());
+                    if(mobil.isGeral()){
+                        mobil = mobil.doc().getMobilDefaultParaReceberJuntada();
+                    }
+                    boolean isEmTransito = mobil.isEmTransito();
+                    if(isEmTransito){
+                        Ex.getInstance()
+                                .getBL()
+                                .receber(exDocProcesso.getCadastrante(), exDocProcesso.getLotaTitular(), mobil,
+                                        dtServidor);
+                    }
+                }
 
                 List<String> hashesComponentes = new ArrayList<>();
 
                 for(DocumentoDoProcesso docProcesso : metadados.getProcesso().getDocumento()){
+
                     String hashComponenteDigital = docProcesso.getComponenteDigital().get(0).getHash().getValue();
                     DataHandler data = receberComponente(idt, hashComponenteDigital, tramite.getProtocolo());
-                    byte[] conteudo = IOUtils.toByteArray(data.getInputStream());
-                    //CRIAR DOCUMENTO
-                    LinkedHashMap<String, String> camposDocCapturado = new LinkedHashMap<>();
-                    camposDocCapturado.put("especie", docProcesso.getEspecie().getNomeNoProdutor());
-                    String numDoc = docProcesso.getIdentificacao() != null ? String.valueOf(docProcesso.getIdentificacao().getNumero()) : null;
-                    if(numDoc == null){
-                        numDoc = docProcesso.getProtocoloDoDocumentoAnexado() != null ? docProcesso.getProtocoloDoDocumentoAnexado() : null;
-                        if (numDoc == null) {
+
+                    if(!existeNoProcesso(exDocProcesso, docProcesso)){
+
+                        Date dataProducaoDoc = metadados.getProcesso().getDataHoraDeProducao() != null ? metadados.getProcesso().getDataHoraDeProducao().toGregorianCalendar().getTime() : null;
+                        Integer nivelSigiloDoc = NivelAcessoEnum.valueOf(metadados.getProcesso().getNivelDeSigilo().intValue()).getIdSiga();
+
+                        byte[] conteudo = IOUtils.toByteArray(data.getInputStream());
+                        //CRIAR DOCUMENTO
+                        LinkedHashMap<String, String> camposDocCapturado = new LinkedHashMap<>();
+                        camposDocCapturado.put("especie", docProcesso.getEspecie().getNomeNoProdutor());
+                        String numDoc = docProcesso.getProtocoloDoDocumentoAnexado() != null ? docProcesso.getProtocoloDoDocumentoAnexado() : null;
+                        if(numDoc == null){
                             numDoc = docProcesso.getProdutor() != null ? docProcesso.getProdutor().getNumeroDeIdentificacao() : null;
                         }
+                        camposDocCapturado.put("numerodoc", numDoc);
+                        Date dataRegistro = docProcesso.getDataHoraDeRegistro() != null ? docProcesso.getDataHoraDeRegistro().toGregorianCalendar().getTime() : null;
+                        camposDocCapturado.put("DataOriginal", DateFormatUtils.format(dataRegistro, "dd/MM/yyyy HH:mm"));
+                        camposDocCapturado.put("remetente", docProcesso.getProdutor().getNome());
+                        camposDocCapturado.put("assunto", docProcesso.getDescricao());
+                        //Nao possui camposDocCapturado.put("info_comp", docProcesso.getIdentificacao() != null ? docProcesso.getIdentificacao().getComplemento() : null);
+                        ExDocumento docCapturado = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
+                                null, DOC_CAPTURADO_TIPO_DOC, DOC_CAPTURADO_FORMA, DOC_CAPTURADO_MODELO, DOC_CAPTURADO_CLASSIF,
+                                null, true, nivelSigiloDoc, camposDocCapturado, exDocProcesso.getSigla(),
+                                estruturaRemetente.getNome(), null, dataProducaoDoc, true, conteudo);
+
+                        Boolean juntado = juntar(docCapturado.getSigla(), exDocProcesso.getSigla(), docCapturado.getLotaDestinatario().getSiglaDePessoaEOuLotacao(), docCapturado.getLotaCadastrante().getSiglaDePessoaEOuLotacao());
+
+                        LOGGER.info("Documento [" +docCapturado.getSigla()+ "] juntado? ["+ juntado+ "]");
                     }
-                    camposDocCapturado.put("numerodoc", numDoc);
-                    Date dataRegistro = docProcesso.getDataHoraDeRegistro() != null ? docProcesso.getDataHoraDeRegistro().toGregorianCalendar().getTime() : null;
-                    camposDocCapturado.put("DataOriginal", DateFormatUtils.format(dataRegistro, "dd/MM/yyyy HH:mm"));
-                    camposDocCapturado.put("remetente", docProcesso.getProdutor().getNome());
-                    camposDocCapturado.put("assunto", docProcesso.getDescricao());
-                    //Nao possui camposDocCapturado.put("info_comp", docProcesso.getIdentificacao() != null ? docProcesso.getIdentificacao().getComplemento() : null);
-                    ExDocumento docCapturado = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
-                            null, DOC_CAPTURADO_TIPO_DOC, DOC_CAPTURADO_FORMA, DOC_CAPTURADO_MODELO, DOC_CAPTURADO_CLASSIF,
-                            null, true, nivelSigilo, camposDocCapturado, doc.getSigla(),
-                            estruturaRemetente.getNome(), null, dataProcesso, true, conteudo);
-
-                    Boolean juntado = juntar(docCapturado.getSigla(), doc.getSigla(), doc.getLotaDestinatario().getSiglaDePessoaEOuLotacao(), doc.getLotaCadastrante().getSiglaDePessoaEOuLotacao());
-
-                    LOGGER.info("Documento [" +docCapturado.getSigla()+ "] juntado? ["+ juntado+ "]");
 
                     hashesComponentes.add(hashComponenteDigital);
                 }
 
-                Date dt = ExDao.getInstance().consultarDataEHoraDoServidor();
                 String descMov = "Processo Recibo PEN - Protocolo: " + metadados.getProcesso().getProtocolo() + " - NRE: " + nre + " - IDT: " + idt;
-                Ex.getInstance().getBL().receberPEN(doc.getCadastrante(), doc.getLotaCadastrante(), doc.getMobilGeral(), dt, descMov);
+                Ex.getInstance().getBL().receberPEN(exDocProcesso.getCadastrante(), exDocProcesso.getLotaCadastrante(), exDocProcesso.getUltimoVolume(), dtServidor, descMov);
+
+                /*Ex.getInstance()
+                        .getBL().transferirAutomatico(exDocProcesso.getCadastrante(), exDocProcesso.getLotaCadastrante(), null, exDocProcesso.getLotaDestinatario(), exDocProcesso.getUltimoVolume());*/
 
                 Collections.sort(hashesComponentes);
                 integracaoPen.enviarReciboTramite(idt, nre, hashesComponentes);
@@ -702,20 +732,6 @@ public class ReceberDocumentoPen extends ExController {
         return false;
     }
 
-/*    private void transferir(){
-        Ex.getInstance()
-                .getBL()
-                .transferir(mov.getOrgaoExterno(), mov.getObsOrgao(),
-                        getCadastrante(), getLotaTitular(), builder.getMob(),
-                        mov.getDtMov(), mov.getDtIniMov(), mov.getDtFimMov(),
-                        mov.getLotaResp(), mov.getResp(),
-                        mov.getLotaDestinoFinal(), mov.getDestinoFinal(),
-                        mov.getSubscritor(), mov.getTitular(),
-                        mov.getExTipoDespacho(), false, mov.getDescrMov(),
-                        movimentacaoBuilder.getConteudo(),
-                        mov.getNmFuncaoSubscritor(), false, false);
-    }*/
-
     private Boolean juntar(String codigoDocumentoViaFilho,
                           String codigoDocumentoViaPai, String siglaDestino,
                           String siglaCadastrante) throws Exception {
@@ -728,6 +744,8 @@ public class ReceberDocumentoPen extends ExController {
             PessoaLotacaoParser destinoParser = new PessoaLotacaoParser(
                     siglaDestino);
 
+            LOGGER.info("######### MOBIL PAI EM TRANSITO ##### "  + mobPai.isEmTransito());
+
             Ex.getInstance()
                     .getBL()
                     .juntarDocumento(cadastranteParser.getPessoa(),
@@ -738,13 +756,30 @@ public class ReceberDocumentoPen extends ExController {
             return true;
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e);
-            return false;
+            throw new AplicacaoException("Erro ao juntar o documento");
         }
     }
 
-    private ExDocumento consultarDocumentPorIDT(String idt){
+    public boolean existeNoProcesso(ExDocumento doc, DocumentoDoProcesso documentoDoProcesso){
+        Set<ExMobil> juntados = doc.getUltimoVolume().getJuntados();
+        //Set<ExDocumento> documentos = doc.getExDocumentoFilhoSet();
+        for(ExMobil mobil : juntados){
+            byte[] bytes = mobil.getExDocumento().getConteudoBlobPdf();
+            try {
+                String hash = IntegracaoPen.fileSha256ToBase64(bytes);
+                if(documentoDoProcesso.getComponenteDigital().get(0).getHash().getValue().equals(hash)){
+                    return true;
+                }
+            } catch (Exception e) {
+                LOGGER.error(e);
+            }
+        }
+        return false;
+    }
+
+    private ExDocumento consultarProcessoPorNRE(String nre){
         final ExMobilDaoFiltro flt = new ExMobilDaoFiltro();
-        flt.setNumExtDoc(idt);
+        flt.setNumExtDoc(nre);
         List<Object[]> mobils = dao().consultarPorFiltroOtimizado(flt);
         if(mobils != null && !mobils.isEmpty()){
             ExDocumento doc = (ExDocumento)mobils.get(0)[0];

@@ -7744,7 +7744,7 @@ public class ExBL extends CpBL {
 	}
 
 
-	public void criarMovimentaoPEN(final DpPessoa cadastrante, final DpLotacao lotaCadastrante, final ExMobil mob, final String descrMov, Long tipoMovimentacao) throws AplicacaoException {
+	public void criarMovimentacaoPEN(final DpPessoa cadastrante, final DpLotacao lotaCadastrante, final ExMobil mob, final String descrMov, Long tipoMovimentacao) throws AplicacaoException {
 		if (descrMov == null) {
 					throw new RegraNegocioException("Descrição da movimentação obrigatório");
 		}

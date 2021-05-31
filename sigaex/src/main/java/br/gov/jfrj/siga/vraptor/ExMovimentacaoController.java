@@ -4,11 +4,9 @@ import static br.gov.jfrj.siga.ex.ExMobil.adicionarIndicativoDeMovimentacaoComOr
 import static br.gov.jfrj.siga.ex.ExMobil.removerIndicativoDeMovimentacaoComOrigemPeloBotaoDeRestricaoDeAcesso;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
-import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.MessageFormat;
@@ -40,6 +38,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
 import br.gov.infraero.siga.pen.client.model.*;
+import br.gov.infraero.siga.pen.client.util.PenProperties;
 import br.gov.jfrj.siga.dp.*;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -2134,46 +2133,30 @@ public class ExMovimentacaoController extends ExController {
 			}
 		}
 
-		//EstruturasEncontradas.Estrutura estrutura = integracaoPen.consultarEstrutura(idEstruturaRepositorio, idEstrutura);
-
-		//CpOrgao cpOrgao = CpDao.getInstance().getOrgaoFromSigla(estrutura.getSigla());
 		CpOrgao cpOrgao = CpDao.getInstance().getOrgaoFromSigla(cpOrgaoSel.getSigla());
 
 		if(cpOrgao == null){
 			cpOrgao = new CpOrgao();
 			cpOrgao.setNmOrgao(cpOrgaoSel.getDescricao());
 			cpOrgao.setHisAtivo(1);
+			cpOrgao.setAtivo("S");
 			cpOrgao.setIdExterna(String.valueOf(cpOrgaoSel.getId()));
 			cpOrgao.setSigla(cpOrgaoSel.getSigla());
-
-		/*	CpOrgaoUsuario cpOrgaoUsuario = new CpOrgaoUsuario();
-			cpOrgaoUsuario.setIdOrgaoUsu(9999999999l);
-			cpOrgaoUsuario.setNmOrgaoUsu(estrutura.getNome());*/
-			CpOrgaoUsuario cpOrgaoUsuario = CpDao.getInstance().consultar(9999999999l, CpOrgaoUsuario.class, false);
-			//CpDao.getInstance().consultarOrgaoUsuarioPorId(9999999999l);
+			CpOrgaoUsuario cpOrgaoUsuario = dao().getPessoaFromSigla(PenProperties.getValue("pen.cadastrante_sistema")).getOrgaoUsuario();
 			cpOrgao.setOrgaoUsuario(cpOrgaoUsuario);
 			CpDao cpDao = CpDao.getInstance();
 			try {
 				cpDao.iniciarTransacao();
-				Object a = cpDao.em().getProperties();
-				Object b = cpDao.em().getMetamodel();
-				//dao().gravar(cpOrgaoUsuario);
-				//cpOrgao.setOrgaoUsuario(cpOrgaoUsuario);
 				cpDao.gravar(cpOrgao);
 				cpDao.commitTransacao();
 			} catch (final Exception e) {
 				cpDao.rollbackTransacao();
 				throw new AplicacaoException("Erro na gravação", 0, e);
 			}
-
-			//cpOrgaoUsuario = CpDao.getInstance().gravar(cpOrgaoUsuario);
-
-			//cpOrgao.setOrgaoUsuario(cpOrgaoUsuario);
-			//cpOrgao = CpDao.getInstance().gravar(cpOrgao);
-			cpOrgaoSel = new CpOrgaoSelecao();
-			cpOrgaoSel.setId(cpOrgao.getId());
-			cpOrgaoSel.buscarPorId();
 		}
+		cpOrgaoSel = new CpOrgaoSelecao();
+		cpOrgaoSel.setId(cpOrgao.getId());
+		cpOrgaoSel.buscarPorId();
 
 		idEstrutura = Long.valueOf(cpOrgao.getIdExterna());
 
@@ -2310,8 +2293,8 @@ public class ExMovimentacaoController extends ExController {
 
 		//ENVIAR PEN
 		EstruturaOrganizacional orgaoRemetente = new EstruturaOrganizacional();
-		orgaoRemetente.setIdentificacaoDoRepositorioDeEstruturas(new BigInteger("001"));
-		orgaoRemetente.setNumeroDeIdentificacaoDaEstrutura("5304");
+		orgaoRemetente.setIdentificacaoDoRepositorioDeEstruturas(new BigInteger(IntegracaoPen.ID_REPOSITORIO));
+		orgaoRemetente.setNumeroDeIdentificacaoDaEstrutura(IntegracaoPen.NUM_ESTRUTURA);
 
 		EstruturaOrganizacional orgaoDestinatario = new EstruturaOrganizacional();
 		orgaoDestinatario.setIdentificacaoDoRepositorioDeEstruturas(BigInteger.valueOf(idEstruturaRepositorio));
@@ -2319,8 +2302,8 @@ public class ExMovimentacaoController extends ExController {
 
 
 		Produtor produtor = new Produtor();
-		produtor.setTipo("orgaopublico");
-		produtor.setNome("Infraero");
+		produtor.setTipo(IntegracaoPen.TIPO_PRODUTOR);
+		produtor.setNome(IntegracaoPen.NOME_PRODUTOR);
 
 
 		//PEGANDO TODOS OS DOCUMENTOS DO PROCESSO
@@ -2335,19 +2318,30 @@ public class ExMovimentacaoController extends ExController {
 		List<DocumentoDoProcesso> documentosProcesso = new ArrayList<>();
 
 		if(isProcesso){
-			Set<ExDocumento> docs = mob.getExDocumentoFilhoSet();
+			//Set<ExDocumento> docs = mob.getExDocumentoFilhoSet();
+			Set<ExMobil> juntados = mob.getJuntados();
 			long ordem = 1;
-			for(ExDocumento doc : docs){
-				DocumentoDoProcesso documentoDoProcesso = montarDocumentoProcessoPen(doc, produtor, ordem);
+			for(ExMobil mobil : juntados){
+				DocumentoDoProcesso documentoDoProcesso = montarDocumentoProcessoPen(mobil.getExDocumento(), produtor, ordem);
 				documentosProcesso.add(documentoDoProcesso);
 				ordem++;
 			}
+/*			for(ExDocumento doc : docs){
+				DocumentoDoProcesso documentoDoProcesso = montarDocumentoProcessoPen(doc, produtor, ordem);
+				documentosProcesso.add(documentoDoProcesso);
+				ordem++;
+			}*/
 		}else{
 			DocumentoDoProcesso documentoDoProcesso = montarDocumentoProcessoPen(mob.getExDocumento(), produtor, 1l);
 			documentosProcesso.add(documentoDoProcesso);
 		}
 
-		DadosTramiteDeProcessoCriado dadosTramite = integracaoPen.enviarProcessoAdministrativo(orgaoRemetente, orgaoDestinatario, 1, sigla, produtor, "Infraero", documentosProcesso, null);
+		ExDocumento doc = builder.getMob().getExDocumento();
+		String nre = doc.getNumExtDoc();
+
+		String descricao = builder.getMob().getDoc().getDescrDocumento();
+
+		DadosTramiteDeProcessoCriado dadosTramite = integracaoPen.enviarProcessoAdministrativo(nre, orgaoRemetente, orgaoDestinatario, 1, sigla, produtor, descricao, documentosProcesso, null);
 		long ticket = dadosTramite.getTicketParaEnvioDeComponentesDigitais();
 		for(DocumentoDoProcesso documento : documentosProcesso){
 			for(ComponenteDigital componenteDigital : documento.getComponenteDigital()){
@@ -2357,10 +2351,10 @@ public class ExMovimentacaoController extends ExController {
 		}
 		//DOWNLOAD RECIBO ENVIO
 		ConteudoDoReciboDeEnvio reciboEnvio = integracaoPen.downloadReciboEnvio(dadosTramite.getIDT());
-		ExDocumento doc = builder.getMob().getExDocumento();
+
 		String descMov = "Recibo envio NRE: " + reciboEnvio.getReciboDeEnvio().getNRE() + " - IDT: " + reciboEnvio.getReciboDeEnvio().getIDT();
-		Ex.getInstance().getBL().criarMovimentaoPEN(getCadastrante(), getLotaCadastrante(), doc.getMobilGeral(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_ENVIO_PEN);
-		doc.setNumExtDoc(String.valueOf(reciboEnvio.getReciboDeEnvio().getIDT()));
+		Ex.getInstance().getBL().criarMovimentacaoPEN(getCadastrante(), getLotaCadastrante(), doc.getUltimoVolume(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_ENVIO_PEN);
+		doc.setNumExtDoc(String.valueOf(reciboEnvio.getReciboDeEnvio().getNRE()));
 		dao().gravar(doc);
 
 		if (protocolo != null && protocolo.equals(OPCAO_MOSTRAR)) {
@@ -2416,7 +2410,7 @@ public class ExMovimentacaoController extends ExController {
 		Especie especie = new Especie();
 		especie.setCodigo(codEspeciePen);
 
-		especie.setNomeNoProdutor("Infraero");
+		especie.setNomeNoProdutor(produtor.getNome());
 		documentoProcesso.setEspecie(especie);
 
 		return documentoProcesso;
@@ -5624,6 +5618,51 @@ public class ExMovimentacaoController extends ExController {
 		}
 
 		ExDocumentoController.redirecionarParaExibir(result, siglaRetorno);
+	}
+
+	@Transacional
+	@Get("/app/expediente/mov/cancelar_pen")
+	public void aCancelarPEN(final String sigla) {
+		final BuscaDocumentoBuilder documentoBuilder = BuscaDocumentoBuilder
+				.novaInstancia().setSigla(sigla);
+
+		buscarDocumento(documentoBuilder);
+		final ExMobil mob = documentoBuilder.getMob();
+
+		final ExMovimentacao exUltMovNaoCanc = mob
+				.getUltimaMovimentacaoNaoCancelada();
+		final ExMovimentacao exUltMov = mob.getUltimaMovimentacao();
+
+		if (exUltMovNaoCanc.getExTipoMovimentacao().getIdTpMov() == ExTipoMovimentacao.TIPO_MOVIMENTACAO_CRIACAO
+				&& exUltMovNaoCanc.getIdMov() == exUltMov.getIdMov()) {
+			if (!Ex.getInstance().getComp()
+					.podeCancelarVia(getTitular(), getLotaTitular(), mob)) {
+				throw new AplicacaoException("Não é possível cancelar via");
+			}
+		} else {
+			if(!Ex.getInstance()
+					.getComp()
+					.podeCancelarMovimentacao(getTitular(), getLotaTitular(),
+							mob) || !Ex.getInstance()
+					.getComp().podeCancelarTramitePen(getTitular(), getLotaTitular(),
+							mob)){
+				throw new AplicacaoException(
+						"Não é possível cancelar o tramite");
+			}
+		}
+		String idtStr = mob.getDoc().getNumExtDoc();
+		try{
+			Long idt = Long.valueOf(idtStr);
+			integracaoPen.cancelarEnvioTramite(idt);
+		}catch (Exception e){
+			LOGGER.error(e);
+			throw new AplicacaoException(
+					"Não é possível cancelar o tramite");
+		}
+
+		Ex.getInstance().getBL()
+				.cancelarMovimentacao(getCadastrante(), getLotaTitular(), mob);
+		ExDocumentoController.redirecionarParaExibir(result, sigla);
 	}
 	
 }

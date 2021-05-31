@@ -4,6 +4,8 @@ import org.jboss.logging.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.Properties;
 
 public class PenProperties {
@@ -23,7 +25,7 @@ public class PenProperties {
                 prop = new Properties();
                 input = PenProperties.class.getClassLoader().getResourceAsStream(
                         "siga-pen.properties");
-                prop.load(input);
+                prop.load((new InputStreamReader(input, Charset.forName("UTF-8"))));
             }
             if(value == null || value.isEmpty()){
                 value = prop.getProperty(key);

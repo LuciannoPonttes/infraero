@@ -47,6 +47,11 @@ public class IntegracaoPen {
 
     private static final String PEN_SERVICE_QNAME = PenProperties.getValue("pen.service.qname");
     private static final String PEN_SERVICE_NAME = PenProperties.getValue("pen.service.name");
+    public static final String ID_REPOSITORIO = PenProperties.getValue("pen.estrutura.id_repositorio");
+    public static final String NUM_ESTRUTURA = PenProperties.getValue("pen.estrutura.num_id_estrutura");
+    public static final String NOME_PRODUTOR = PenProperties.getValue("pen.produtor.nome");
+    public static final String TIPO_PRODUTOR = PenProperties.getValue("pen.produtor.tipo");
+
 
 
     private InteroperabilidadePEN interoperabilidadePEN;
@@ -162,6 +167,10 @@ public class IntegracaoPen {
         getInteroperabilidadePEN().recusarTramite(recusa);
     }
 
+    public void cancelarEnvioTramite(long idt) throws Exception {
+        getInteroperabilidadePEN().cancelarEnvioDeTramite(idt);
+    }
+
     public DataHandler receberComponenteDigital(ParametrosParaRecebimentoDeComponenteDigital parametros) throws Exception {
         return getInteroperabilidadePEN().receberComponenteDigital(parametros);
     }
@@ -234,9 +243,10 @@ public class IntegracaoPen {
         getInteroperabilidadePEN().enviarComponenteDigital(dadosUpload);
     }
 
-    public DadosTramiteDeProcessoCriado enviarProcessoAdministrativo(EstruturaOrganizacional orgaoRemetente, EstruturaOrganizacional orgaoDestinatario, Integer nivelSigilo, String nuProtocolo, Produtor produtor, String descricao, List<DocumentoDoProcesso> documentos, List<Interessado> interessados) throws DatatypeConfigurationException, InteroperabilidadeException_Exception {
+    public DadosTramiteDeProcessoCriado enviarProcessoAdministrativo(String nre, EstruturaOrganizacional orgaoRemetente, EstruturaOrganizacional orgaoDestinatario, Integer nivelSigilo, String nuProtocolo, Produtor produtor, String descricao, List<DocumentoDoProcesso> documentos, List<Interessado> interessados) throws DatatypeConfigurationException, InteroperabilidadeException_Exception {
         NovoTramiteDeProcesso dadosEnvio = new NovoTramiteDeProcesso();
         NovoTramiteDeProcesso.Cabecalho cabecalho = new NovoTramiteDeProcesso.Cabecalho();
+        cabecalho.setNRE(nre);
         cabecalho.setObrigarEnvioDeTodosOsComponentesDigitais(true);
         cabecalho.setRemetente(orgaoRemetente);
         cabecalho.setDestinatario(orgaoDestinatario);
