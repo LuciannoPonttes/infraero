@@ -259,10 +259,19 @@ public class IntegracaoPen {
         processo.setProdutor(produtor);
         processo.setDescricao(descricao);
         processo.getDocumento().addAll(documentos);
-        Interessado interessado1 = new Interessado();
-        interessado1.setNome("João Carlos");
-        interessado1.setTipo("fisica");
-        processo.getInteressado().add(interessado1);
+        if(interessados != null){
+            for(Interessado interessado : interessados){
+                Interessado interessado1 = new Interessado();
+                interessado1.setNome(interessado.getNome());
+                interessado1.setTipo(interessado.getTipo());
+                processo.getInteressado().add(interessado1);
+            }
+        }else{
+            Interessado interessado1 = new Interessado();
+            interessado1.setNome(produtor.getNome());
+            interessado1.setTipo("fisica");
+            processo.getInteressado().add(interessado1);
+        }
         dadosEnvio.setProcesso(processo);
         return getInteroperabilidadePEN().enviarProcesso(dadosEnvio);
     }

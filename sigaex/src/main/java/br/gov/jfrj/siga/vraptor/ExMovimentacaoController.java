@@ -2353,7 +2353,7 @@ public class ExMovimentacaoController extends ExController {
 		ConteudoDoReciboDeEnvio reciboEnvio = integracaoPen.downloadReciboEnvio(dadosTramite.getIDT());
 
 		String descMov = "Recibo envio NRE: " + reciboEnvio.getReciboDeEnvio().getNRE() + " - IDT: " + reciboEnvio.getReciboDeEnvio().getIDT();
-		Ex.getInstance().getBL().criarMovimentacaoPEN(getCadastrante(), getLotaCadastrante(), doc.getUltimoVolume(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_ENVIO_PEN);
+		Ex.getInstance().getBL().criarMovimentacaoPEN(getCadastrante(), getLotaCadastrante(), isProcesso ? doc.getUltimoVolume() : doc.getPrimeiraVia(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_ENVIO_PEN);
 		doc.setNumExtDoc(String.valueOf(reciboEnvio.getReciboDeEnvio().getNRE()));
 		dao().gravar(doc);
 
