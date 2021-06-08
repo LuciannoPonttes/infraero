@@ -13,6 +13,7 @@ import br.com.caelum.vraptor.view.Results;
 import br.gov.infraero.siga.pen.client.model.EstruturasEncontradas;
 import br.gov.infraero.siga.pen.client.model.FiltroDeEstruturas;
 import br.gov.infraero.siga.pen.client.model.IntegracaoPen;
+import br.gov.infraero.siga.pen.client.model.Paginacao;
 import br.gov.jfrj.siga.base.AplicacaoException;
 import br.gov.jfrj.siga.base.Texto;
 import br.gov.jfrj.siga.dp.CpOrgao;
@@ -146,13 +147,17 @@ public class OrgaoController extends SigaSelecionavelControllerSupport<CpOrgao, 
 
 	private static IntegracaoPen integracaoPen = new IntegracaoPen();
 
-	protected List<EstruturasEncontradas.Estrutura> consultarEstruturas(Long idRepositorioEstrutura, String nome) {
+	protected EstruturasEncontradas consultarEstruturas(Long idRepositorioEstrutura, String nome, Integer registroInicial, Integer qtdRegistros) {
 		FiltroDeEstruturas filtro = new FiltroDeEstruturas();
 		filtro.setIdentificacaoDoRepositorioDeEstruturas(BigInteger.valueOf(idRepositorioEstrutura));
 		filtro.setApenasAtivas(true);
 		filtro.setPermiteRecebimento(true);
 		filtro.setNome(nome);
-		List<EstruturasEncontradas.Estrutura> estruturas = integracaoPen.consultarEstruturas(filtro);
+		Paginacao paginacao = new Paginacao();
+		paginacao.setRegistroInicial(BigInteger.valueOf(registroInicial));
+		paginacao.setQuantidadeDeRegistros(BigInteger.valueOf(qtdRegistros));
+		filtro.setPaginacao(paginacao);
+		EstruturasEncontradas estruturas = integracaoPen.consultarEstruturas(filtro);
 		return estruturas;
 	}
 	
@@ -160,16 +165,21 @@ public class OrgaoController extends SigaSelecionavelControllerSupport<CpOrgao, 
 	@Post
 	@Path({"/app/orgao/buscar","/orgao/buscar.action"})
 	public void busca(final String sigla,
-			     	  final Integer paramoffset,
+			     	  final Integer offset,
 			     	  final String postback,
-			     	  final String propriedade, final Long idRepositorioEstrutura) throws Exception {
-		this.getP().setOffset(paramoffset);
-		if(propriedade != null && propriedade.equalsIgnoreCase("cpOrgao")){
+			     	  final String propriedade, final Long idRepositorioEstrutura, final Boolean modal) throws Exception {
+		this.getP().setOffset(offset);
+		if(propriedade != null && propriedade.equalsIgnoreCase("cpOrgao") && idRepositorioEstrutura != null){
 
-			List<EstruturasEncontradas.Estrutura> estruturas = consultarEstruturas(idRepositorioEstrutura != null ? idRepositorioEstrutura : 1l, sigla);
+			Integer inicial = 0;
+			if(offset != null){
+				inicial = offset;
+			}
+
+			EstruturasEncontradas estruturas = consultarEstruturas(idRepositorioEstrutura, sigla, inicial, 10);
 			List<CpOrgao> orgaos = new ArrayList<>();
-			if(estruturas != null && !estruturas.isEmpty()){
-				for(EstruturasEncontradas.Estrutura estrutura : estruturas){
+			if(estruturas.getEstrutura() != null && !estruturas.getEstrutura().isEmpty()){
+				for(EstruturasEncontradas.Estrutura estrutura : estruturas.getEstrutura()){
 					CpOrgao orgao = new CpOrgao();
 					String compl = "";
 					if(estrutura.getHierarquia() != null && estrutura.getHierarquia().getNivel() != null && !estrutura.getHierarquia().getNivel().isEmpty()){
@@ -182,9 +192,9 @@ public class OrgaoController extends SigaSelecionavelControllerSupport<CpOrgao, 
 					orgaos.add(orgao);
 				}
 			}
-
+			result.include("currentPageNumber", calculaPaginaAtual(offset));
 			this.setItens(orgaos);
-			this.setTamanho(orgaos.size());
+			this.setTamanho(Long.valueOf(estruturas.getTotalDeRegistros()).intValue());
 
 		}else{
 			this.aBuscar(sigla, postback);
@@ -195,10 +205,11 @@ public class OrgaoController extends SigaSelecionavelControllerSupport<CpOrgao, 
 		result.include("tamanho",this.getTamanho());
 		result.include("request",getRequest());
 		result.include("sigla",sigla);
-		result.include("offset",paramoffset);
+		result.include("offset",offset);
 		result.include("postback",postback);
 		result.include("propriedade",propriedade);
 		result.include("idRepositorioEstrutura",idRepositorioEstrutura);
+		result.include("modal",modal);
 	}
 	
 	@Get

@@ -8,6 +8,9 @@
 	value="${fn:replace(param.propriedade,'.','')}" />
 
 <siga:pagina titulo="Busca de Órgão Externo" popup="true">
+	<link rel="stylesheet" href="/siga/javascript/select2/select2.css" type="text/css" media="screen, projection" />
+	<link rel="stylesheet" href="/siga/javascript/select2/select2-bootstrap.css" type="text/css" media="screen, projection" />
+
 
 	<script type="text/javascript" language="Javascript1.1">
 		function sbmt(offset) {
@@ -37,6 +40,7 @@
 			<input type="hidden" name="postback" value="1" /> <input
 				type="hidden" name="offset" value="0" />
 			<input type="hidden" name="idRepositorioEstrutura" value="${param.idRepositorioEstrutura}" />
+			<input type="hidden" name="modal" value="${param.modal}" />
 			<div class="card bg-light mb-3">
 				<div class="card-header">
 					<h5>Dados do Órgão Externo</h5>
@@ -63,7 +67,7 @@
 
 
 		<table border="0" class="table table-sm table-striped">
-			<thead class="thead-dark">
+			<thead class="${thead_color}">
 				<th align="center">Sigla</th>
 				<th align="left">Nome</th>
 			</thead>
@@ -77,4 +81,7 @@
 			</siga:paginador>
 		</table>
 	</div>
+	<script type="text/javascript" src="/siga/javascript/select2/select2.min.js"></script>
+	<script type="text/javascript" src="/siga/javascript/select2/i18n/pt-BR.js"></script>
+	<script type="text/javascript" src="/siga/javascript/siga.select2.js"></script>
 </siga:pagina>

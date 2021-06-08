@@ -2047,16 +2047,25 @@ public class ExMovimentacaoController extends ExController {
 		result.include("protocolo", OPCAO_MOSTRAR.equals(protocolo));
 		result.include("dtDevolucaoMovString", dtDevolucaoMovString);
 
-		result.include("listaRepositorioEstruturas", this.getListaRepositorioEstruturaPen());
+		Map<String, String> repositorioEstruturaPen = this.getListaRepositorioEstruturaPen();
+
+		result.include("listaRepositorioEstruturas", repositorioEstruturaPen);
 
 		List<EstruturasEncontradas.Estrutura> estruturas = new ArrayList<>();
 
+		Long idRepositorio = idEstruturaRepositorio;
+
 		if(idEstruturaRepositorio != null && idEstruturaRepositorio != 0l){
 			estruturas = consultarEstruturas(idEstruturaRepositorio, nomeOrgao);
+		}else{
+			for(Map.Entry<String, String> map : repositorioEstruturaPen.entrySet()){
+				idRepositorio = Long.valueOf(map.getKey());
+				break;
+			}
 		}
 
 		result.include("listaEstrutura", estruturas);
-		result.include("idEstruturaRepositorio", idEstruturaRepositorio);
+		result.include("idEstruturaRepositorio", idRepositorio);
 	}
 
 	protected Map<String, String> getListaRepositorioEstruturaPen() {
@@ -2073,7 +2082,7 @@ public class ExMovimentacaoController extends ExController {
 		filtro.setIdentificacaoDoRepositorioDeEstruturas(BigInteger.valueOf(idRepositorioEstrutura));
 		filtro.setApenasAtivas(true);
 		filtro.setNome(nome);
-		List<EstruturasEncontradas.Estrutura> estruturas = integracaoPen.consultarEstruturas(filtro);
+		List<EstruturasEncontradas.Estrutura> estruturas = integracaoPen.consultarEstruturas(filtro).getEstrutura();
 		return estruturas;
 	}
 

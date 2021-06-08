@@ -12,7 +12,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.security.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -118,7 +117,7 @@ public class IntegracaoPen {
         return estruturas.estrutura;
     }
 
-    public List<EstruturasEncontradas.Estrutura> consultarEstruturas(FiltroDeEstruturas filtro){
+    public EstruturasEncontradas consultarEstruturas(FiltroDeEstruturas filtro){
         EstruturasEncontradas estruturas = null;
         try {
             estruturas = getInteroperabilidadePEN().consultarEstruturas(filtro);
@@ -126,7 +125,7 @@ public class IntegracaoPen {
             System.out.println("Código do erro: " + e.getFaultInfo().getCodigoErro());
             System.out.println("Mensagem de erro: " + e.getFaultInfo().getMensagem());
         }
-        return estruturas.estrutura;
+        return estruturas;
     }
 
     public EstruturasEncontradas.Estrutura consultarEstrutura(Long idRepositorioEstrutura, Long idEstrutura){
