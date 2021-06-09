@@ -100,17 +100,29 @@ public class ReceberDocumentoPen extends ExController {
                 if(idt.getStatus().intValue() == StatusPen.RECIBO_CONCLUSAO_TRAMITE_RECEB_SOLUCAO.getId()){
                     ExDocumento exDocumento = consultarProcessoPorNRE(tramite.getNRE());
                     ConteudoDoReciboDeTramite reciboTramite = integracaoPen.downloadReciboTramite(idt.getValue());
-                    if(exDocumento != null && reciboTramite != null){
+                    if(exDocumento != null && reciboTramite != null){ //TODO fazer validacao se é processo ou doc para pegar o mob correto. UltimoVolume ou PrimeiraVia
                             String descMov = "Recibo tramite NRE: " + reciboTramite.getRecibo().getNRE() + " - IDT: " + reciboTramite.getRecibo().getIDT();
-                            Ex.getInstance().getBL().criarMovimentacaoPEN(exDocumento.getCadastrante(), exDocumento.getLotaCadastrante(), exDocumento.getUltimoVolume(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_TRAMITE_PEN);
+                            ExMobil mobil = null;
+                            if(exDocumento.isProcesso()){
+                                mobil = exDocumento.getUltimoVolume();
+                            }else{
+                                mobil = exDocumento.getPrimeiraVia();
+                            }
+                            Ex.getInstance().getBL().criarMovimentacaoPEN(exDocumento.getCadastrante(), exDocumento.getLotaCadastrante(), mobil, descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_TRAMITE_PEN);
                     }
                 }
-                if(idt.getStatus().intValue() == StatusPen.AGUARDANDO_CIENCIA.getId()){
+                if(idt.getStatus().intValue() == StatusPen.AGUARDANDO_CIENCIA.getId()){ //TODO fazer validacao se é processo ou doc para pegar o mob correto. UltimoVolume ou PrimeiraVia
                     informarCienciaRecusa(idt.getValue());
                     ExDocumento exDocumento = consultarProcessoPorNRE(tramite.getNRE());
                     if(exDocumento != null){
                         String descMov = "Tramite recusado - Motivo: " + tramite.getMotivoDaRecusa() + " - Justificativa: " + tramite.getJustificativaDaRecusa();
-                        Ex.getInstance().getBL().criarMovimentacaoPEN(exDocumento.getCadastrante(), exDocumento.getLotaCadastrante(), exDocumento.getUltimoVolume(), descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECUSA_TRAMITE_PEN);
+                        ExMobil mobil = null;
+                        if(exDocumento.isProcesso()){
+                            mobil = exDocumento.getUltimoVolume();
+                        }else{
+                            mobil = exDocumento.getPrimeiraVia();
+                        }
+                        Ex.getInstance().getBL().criarMovimentacaoPEN(exDocumento.getCadastrante(), exDocumento.getLotaCadastrante(), mobil, descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECUSA_TRAMITE_PEN);
                     }
                 }
             }
@@ -194,6 +206,16 @@ public class ReceberDocumentoPen extends ExController {
                     }
                 }
 
+                ExMobil mobilProcesso = null;
+
+                boolean isProcesso = exDocProcesso.isProcesso();
+                LOGGER.info("É PROCESSO [" +exDocProcesso.getSigla()+ "] ? ["+ isProcesso+ "]");
+                if(isProcesso){
+                    mobilProcesso = exDocProcesso.getUltimoVolume();
+                }else{
+                    mobilProcesso = exDocProcesso.getPrimeiraVia();
+                }
+
                 List<String> hashesComponentes = new ArrayList<>();
 
                 for(DocumentoDoProcesso docProcesso : metadados.getProcesso().getDocumento()){
@@ -222,10 +244,10 @@ public class ReceberDocumentoPen extends ExController {
                         //Nao possui camposDocCapturado.put("info_comp", docProcesso.getIdentificacao() != null ? docProcesso.getIdentificacao().getComplemento() : null);
                         ExDocumento docCapturado = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
                                 null, DOC_CAPTURADO_TIPO_DOC, DOC_CAPTURADO_FORMA, DOC_CAPTURADO_MODELO, DOC_CAPTURADO_CLASSIF,
-                                null, true, nivelSigiloDoc, camposDocCapturado, exDocProcesso.getSigla(),
+                                null, true, nivelSigiloDoc, camposDocCapturado, mobilProcesso.getSigla(),
                                 estruturaRemetente.getNome(), null, dataProducaoDoc, true, conteudo);
 
-                        Boolean juntado = juntar(docCapturado.getSigla(), exDocProcesso.getSigla(), docCapturado.getLotaDestinatario().getSiglaDePessoaEOuLotacao(), docCapturado.getLotaCadastrante().getSiglaDePessoaEOuLotacao());
+                        Boolean juntado = juntar(docCapturado.getPrimeiraVia().getSigla(), mobilProcesso.getSigla(), docCapturado.getLotaDestinatario().getSiglaDePessoaEOuLotacao(), docCapturado.getLotaCadastrante().getSiglaDePessoaEOuLotacao());
 
                         LOGGER.info("Documento [" +docCapturado.getSigla()+ "] juntado? ["+ juntado+ "]");
                     }
@@ -234,7 +256,7 @@ public class ReceberDocumentoPen extends ExController {
                 }
 
                 String descMov = "Processo Recibo PEN - Protocolo: " + metadados.getProcesso().getProtocolo() + " - NRE: " + nre + " - IDT: " + idt;
-                Ex.getInstance().getBL().receberPEN(exDocProcesso.getCadastrante(), exDocProcesso.getLotaCadastrante(), exDocProcesso.getUltimoVolume(), dtServidor, descMov);
+                Ex.getInstance().getBL().receberPEN(exDocProcesso.getCadastrante(), exDocProcesso.getLotaCadastrante(), mobilProcesso, dtServidor, descMov);
 
                 /*Ex.getInstance()
                         .getBL().transferirAutomatico(exDocProcesso.getCadastrante(), exDocProcesso.getLotaCadastrante(), null, exDocProcesso.getLotaDestinatario(), exDocProcesso.getUltimoVolume());*/
@@ -761,7 +783,17 @@ public class ReceberDocumentoPen extends ExController {
     }
 
     public boolean existeNoProcesso(ExDocumento doc, DocumentoDoProcesso documentoDoProcesso){
-        Set<ExMobil> juntados = doc.getUltimoVolume().getJuntados();
+        boolean isProcesso = doc.isProcesso();
+        Set<ExMobil> juntados = new HashSet<>();
+        try{
+            if(isProcesso){
+                juntados = doc.getUltimoVolume().getJuntados();
+            }else{
+                juntados = doc.getPrimeiraVia().getJuntados();
+            }
+        }catch (Exception e){
+            juntados = new HashSet<>();
+        }
         //Set<ExDocumento> documentos = doc.getExDocumentoFilhoSet();
         for(ExMobil mobil : juntados){
             byte[] bytes = mobil.getExDocumento().getConteudoBlobPdf();
