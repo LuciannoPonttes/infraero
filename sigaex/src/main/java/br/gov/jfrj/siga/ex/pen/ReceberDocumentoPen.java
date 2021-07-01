@@ -100,7 +100,7 @@ public class ReceberDocumentoPen extends ExController {
                 if(idt.getStatus().intValue() == StatusPen.RECIBO_CONCLUSAO_TRAMITE_RECEB_SOLUCAO.getId()){
                     ExDocumento exDocumento = consultarProcessoPorNRE(tramite.getNRE());
                     ConteudoDoReciboDeTramite reciboTramite = integracaoPen.downloadReciboTramite(idt.getValue());
-                    if(exDocumento != null && reciboTramite != null){ //TODO fazer validacao se é processo ou doc para pegar o mob correto. UltimoVolume ou PrimeiraVia
+                    if(exDocumento != null && reciboTramite != null){
                             String descMov = "Recibo tramite NRE: " + reciboTramite.getRecibo().getNRE() + " - IDT: " + reciboTramite.getRecibo().getIDT();
                             ExMobil mobil = null;
                             if(exDocumento.isProcesso()){
@@ -111,7 +111,7 @@ public class ReceberDocumentoPen extends ExController {
                             Ex.getInstance().getBL().criarMovimentacaoPEN(exDocumento.getCadastrante(), exDocumento.getLotaCadastrante(), mobil, descMov, ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_TRAMITE_PEN);
                     }
                 }
-                if(idt.getStatus().intValue() == StatusPen.AGUARDANDO_CIENCIA.getId()){ //TODO fazer validacao se é processo ou doc para pegar o mob correto. UltimoVolume ou PrimeiraVia
+                if(idt.getStatus().intValue() == StatusPen.AGUARDANDO_CIENCIA.getId()){
                     informarCienciaRecusa(idt.getValue());
                     ExDocumento exDocumento = consultarProcessoPorNRE(tramite.getNRE());
                     if(exDocumento != null){
@@ -187,7 +187,7 @@ public class ReceberDocumentoPen extends ExController {
                     String interessado = metadados.getProcesso().getInteressado() != null && !metadados.getProcesso().getInteressado().isEmpty() ? metadados.getProcesso().getInteressado().get(0).getNome() : "";
                     campos.put("nome_interessado", interessado);
                     String numDocNRE = nre;
-                    exDocProcesso = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
+                    exDocProcesso = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, null,
                             null, PROCESSO_ADM_TIPO_DOC, PROCESSO_ADM_FORMA, PROCESSO_ADM_MODELO, PROCESSO_ADM_CLASSIF,
                             null, true, nivelSigilo, campos, null,
                             estruturaRemetente.getNome(), numDocNRE, dataProcesso, true, null);
@@ -197,12 +197,14 @@ public class ReceberDocumentoPen extends ExController {
                     if(mobil.isGeral()){
                         mobil = mobil.doc().getMobilDefaultParaReceberJuntada();
                     }
-                    boolean isEmTransito = mobil.isEmTransito();
-                    if(isEmTransito){
-                        Ex.getInstance()
-                                .getBL()
-                                .receber(exDocProcesso.getCadastrante(), exDocProcesso.getLotaTitular(), mobil,
-                                        dtServidor);
+                    if(mobil != null){
+                        boolean isEmTransito = mobil.isEmTransito();
+                        if(isEmTransito){
+                            Ex.getInstance()
+                                    .getBL()
+                                    .receber(exDocProcesso.getCadastrante(), exDocProcesso.getLotaTitular(), mobil,
+                                            dtServidor);
+                        }
                     }
                 }
 
@@ -238,18 +240,15 @@ public class ReceberDocumentoPen extends ExController {
                         }
                         camposDocCapturado.put("numerodoc", numDoc);
                         Date dataRegistro = docProcesso.getDataHoraDeRegistro() != null ? docProcesso.getDataHoraDeRegistro().toGregorianCalendar().getTime() : null;
-                        camposDocCapturado.put("DataOriginal", DateFormatUtils.format(dataRegistro, "dd/MM/yyyy HH:mm"));
+                        camposDocCapturado.put("DataOriginal", DateFormatUtils.format(dataRegistro, "dd/MM/yyyy"));
                         camposDocCapturado.put("remetente", docProcesso.getProdutor().getNome());
                         camposDocCapturado.put("assunto", docProcesso.getDescricao());
-                        //Nao possui camposDocCapturado.put("info_comp", docProcesso.getIdentificacao() != null ? docProcesso.getIdentificacao().getComplemento() : null);
-                        ExDocumento docCapturado = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, LOTACAO_DESTINATARIO,
+                        camposDocCapturado.put("info_comp", docProcesso.getIdentificacao().getComplemento() != null ? docProcesso.getIdentificacao().getComplemento() : "***");
+                        ExDocumento docCapturado = criarDocumentoSiga(null, CADASTRANTE_SISTEMA, CADASTRANTE_SISTEMA, null,
                                 null, DOC_CAPTURADO_TIPO_DOC, DOC_CAPTURADO_FORMA, DOC_CAPTURADO_MODELO, DOC_CAPTURADO_CLASSIF,
                                 null, true, nivelSigiloDoc, camposDocCapturado, mobilProcesso.getSigla(),
-                                estruturaRemetente.getNome(), null, dataProducaoDoc, true, conteudo);
+                                estruturaRemetente.getNome(), null, dataProducaoDoc, false, conteudo);
 
-                        Boolean juntado = juntar(docCapturado.getPrimeiraVia().getSigla(), mobilProcesso.getSigla(), docCapturado.getLotaDestinatario().getSiglaDePessoaEOuLotacao(), docCapturado.getLotaCadastrante().getSiglaDePessoaEOuLotacao());
-
-                        LOGGER.info("Documento [" +docCapturado.getSigla()+ "] juntado? ["+ juntado+ "]");
                     }
 
                     hashesComponentes.add(hashComponenteDigital);
@@ -257,9 +256,6 @@ public class ReceberDocumentoPen extends ExController {
 
                 String descMov = "Processo Recibo PEN - Protocolo: " + metadados.getProcesso().getProtocolo() + " - NRE: " + nre + " - IDT: " + idt;
                 Ex.getInstance().getBL().receberPEN(exDocProcesso.getCadastrante(), exDocProcesso.getLotaCadastrante(), mobilProcesso, dtServidor, descMov);
-
-                /*Ex.getInstance()
-                        .getBL().transferirAutomatico(exDocProcesso.getCadastrante(), exDocProcesso.getLotaCadastrante(), null, exDocProcesso.getLotaDestinatario(), exDocProcesso.getUltimoVolume());*/
 
                 Collections.sort(hashesComponentes);
                 integracaoPen.enviarReciboTramite(idt, nre, hashesComponentes);
@@ -307,7 +303,7 @@ public class ReceberDocumentoPen extends ExController {
                                           String descricaoTipoDeDocumento, String nomeForma,
                                           String nomeModelo, String classificacaoStr, String descricaoStr,
                                           Boolean eletronico, Integer idNivelDeAcesso,
-                                          LinkedHashMap<String, String> campos, String siglaMobilPai, String obsOrgao, String numDoc, Date dtDocumento, Boolean finalizar, byte[] arquivo) throws Exception {
+                                          LinkedHashMap<String, String> campos, String siglaMobilPai, String obsOrgao, String numDoc, Date dtDocumento, Boolean isProcesso, byte[] arquivo) throws Exception {
 
         try {
             DpPessoa cadastrante = null;
@@ -317,9 +313,6 @@ public class ReceberDocumentoPen extends ExController {
             ExTipoDocumento tipoDocumento = null;
             ExClassificacao classificacao = null;
             ExNivelAcesso nivelDeAcesso = null;
-            DpLotacao destinatarioLotacao = null;
-            DpPessoa destinatarioPessoa = null;
-            CpOrgao destinatarioOrgaoExterno = null;
 
             ExDocumento doc;
             ExMobil mob;
@@ -522,44 +515,10 @@ public class ReceberDocumentoPen extends ExController {
             doc.setTitular(subscritor);
             doc.setLotaTitular(subscritor.getLotacao());
 
-            if(destinatarioStr != null) {
-                try {
-                    destinatarioLotacao = dao().getLotacaoFromSigla(destinatarioStr);
-
-                    if(destinatarioLotacao != null)
-                        doc.setLotaDestinatario(destinatarioLotacao);
-                } catch (Exception e) {
-                }
+            if(isProcesso){
+                doc.setSubscritor(subscritor);
+                doc.setLotaSubscritor(subscritor.getLotacao());
             }
-
-            if(destinatarioStr != null && destinatarioLotacao == null) {
-                try {
-                    destinatarioPessoa = dao().getPessoaFromSigla(destinatarioStr);
-
-                    if(destinatarioPessoa != null)
-                        doc.setDestinatario(destinatarioPessoa);
-                } catch (Exception e) {
-                }
-            }
-
-            if(destinatarioStr != null && destinatarioLotacao == null && destinatarioPessoa == null) {
-                try {
-                    destinatarioOrgaoExterno = dao().getOrgaoFromSiglaExata(destinatarioStr);
-
-                    if(destinatarioOrgaoExterno != null) {
-                        doc.setOrgaoExternoDestinatario(destinatarioOrgaoExterno);
-                        doc.setNmOrgaoExterno(destinatarioCampoExtraStr);
-                    }
-                } catch (Exception e) {
-                }
-            }
-
-            if(destinatarioStr != null && destinatarioLotacao == null && destinatarioPessoa == null && destinatarioOrgaoExterno == null) {
-                doc.setNmDestinatario(destinatarioStr);
-            }
-
-            doc.setSubscritor(subscritor);
-            doc.setLotaSubscritor(subscritor.getLotacao());
             doc.setOrgaoUsuario(subscritor.getOrgaoUsuario());
             doc.setExTipoDocumento(tipoDocumento);
             doc.setExFormaDocumento(forma);
@@ -648,8 +607,7 @@ public class ReceberDocumentoPen extends ExController {
             doc = Ex.getInstance()
                     .getBL().gravar(cadastrante, subscritor, subscritor.getLotacao(), doc);
 
-            if(finalizar)
-                Ex.getInstance().getBL().finalizar(cadastrante, cadastrante.getLotacao(), doc);
+            Ex.getInstance().getBL().finalizar(cadastrante, cadastrante.getLotacao(), doc);
 
 
             return doc;
