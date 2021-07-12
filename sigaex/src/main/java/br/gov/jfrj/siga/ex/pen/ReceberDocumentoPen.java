@@ -12,8 +12,6 @@ import br.gov.infraero.siga.pen.client.util.PenProperties;
 import br.gov.jfrj.siga.base.AplicacaoException;
 import br.gov.jfrj.siga.cp.CpSituacaoConfiguracao;
 import br.gov.jfrj.siga.cp.CpTipoConfiguracao;
-import br.gov.jfrj.siga.dp.CpOrgao;
-import br.gov.jfrj.siga.dp.DpLotacao;
 import br.gov.jfrj.siga.dp.DpPessoa;
 import br.gov.jfrj.siga.ex.*;
 import br.gov.jfrj.siga.ex.bl.Ex;
@@ -39,7 +37,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -82,8 +79,6 @@ public class ReceberDocumentoPen extends ExController {
             .getLogger(ReceberDocumentoPen.class);
 
     private IntegracaoPen integracaoPen = new IntegracaoPen();
-    private final BigInteger ID_ESTRUTURA = BigInteger.valueOf(1l);
-    private final String NUMERO_IDENTIFICACAO = "5304";
 
     @Transacional
     @Post("public/app/pen/receberDocumentos")
@@ -754,14 +749,17 @@ public class ReceberDocumentoPen extends ExController {
         }
         //Set<ExDocumento> documentos = doc.getExDocumentoFilhoSet();
         for(ExMobil mobil : juntados){
-            byte[] bytes = mobil.getExDocumento().getConteudoBlobPdf();
-            try {
-                String hash = IntegracaoPen.fileSha256ToBase64(bytes);
-                if(documentoDoProcesso.getComponenteDigital().get(0).getHash().getValue().equals(hash)){
-                    return true;
+            List<ExMovimentacao> movs = mobil.getMovimentacoesPorTipo(ExTipoMovimentacao.TIPO_MOVIMENTACAO_PDF_ESTAMPADO_PEN, true);
+            if(movs != null && !movs.isEmpty()){
+                byte[] bytes = movs.get(0).getConteudoBlob("doc.pdf");
+                try {
+                    String hash = IntegracaoPen.fileSha256ToBase64(bytes);
+                    if(documentoDoProcesso.getComponenteDigital().get(0).getHash().getValue().equals(hash)){
+                        return true;
+                    }
+                } catch (Exception e) {
+                    LOGGER.error(e);
                 }
-            } catch (Exception e) {
-                LOGGER.error(e);
             }
         }
         return false;

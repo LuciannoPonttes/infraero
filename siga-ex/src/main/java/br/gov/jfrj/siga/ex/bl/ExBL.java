@@ -20,11 +20,7 @@ package br.gov.jfrj.siga.ex.bl;
 
 import static br.gov.jfrj.siga.ex.ExMobil.isMovimentacaoComOrigemPeloBotaoDeRestricaoDeAcesso;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -55,6 +51,7 @@ import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.io.FileUtils;
 import org.hibernate.ObjectNotFoundException;
 import org.hibernate.proxy.HibernateProxy;
 import org.jboss.logging.Logger;
@@ -7763,7 +7760,36 @@ public class ExBL extends CpBL {
 			concluirAlteracao(mov);
 		} catch (final Exception e) {
 			cancelarAlteracao();
-			throw new RuntimeException("Erro ao fazer anotação.", e);
+			throw new RuntimeException("Erro ao gravar movimentação.", e);
+		}
+	}
+
+	public ExMovimentacao criarMovimentacaoComPDFEstampado(final DpPessoa cadastrante, final DpLotacao lotaCadastrante, final ExMobil mob, final String descrMov, Long tipoMovimentacao) throws AplicacaoException {
+		if (descrMov == null) {
+			throw new RegraNegocioException("Descrição da movimentação obrigatório");
+		}
+		try {
+			iniciarAlteracao();
+
+			Date dtMov = ExDao.getInstance().consultarDataEHoraDoServidor();
+
+			final ExMovimentacao mov = criarNovaMovimentacao(tipoMovimentacao, cadastrante,
+					lotaCadastrante, mob, dtMov, null, null, null, null, dtMov);
+
+			mov.setDescrMov(descrMov);
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			Documento.getDocumento(baos, null, mob, null, true, true, false, null, null);
+			byte[] ab = baos.toByteArray();
+			mov.setConteudoBlobPdf(ab);
+
+			gravarMovimentacao(mov);
+
+			concluirAlteracao(mov);
+
+			return mov;
+		} catch (final Exception e) {
+			cancelarAlteracao();
+			throw new RuntimeException("Erro ao gravar movimentação.", e);
 		}
 	}
 

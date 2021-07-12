@@ -218,6 +218,7 @@ public class ExTipoMovimentacao extends AbstractExTipoMovimentacao implements Se
 	final static public long TIPO_MOVIMENTACAO_RECUSA_TRAMITE_PEN = 82;
 	final static public long TIPO_MOVIMENTACAO_RECIBO_TRAMITE_PEN = 83;
 	final static public long TIPO_MOVIMENTACAO_RECIBO_ENVIO_PEN = 84;
+	final static public long TIPO_MOVIMENTACAO_PDF_ESTAMPADO_PEN = 85;
 	
 	public static boolean hasDespacho(long id) {
 		return id == ExTipoMovimentacao.TIPO_MOVIMENTACAO_DESPACHO

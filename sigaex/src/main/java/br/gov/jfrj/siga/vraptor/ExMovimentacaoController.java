@@ -2335,11 +2335,6 @@ public class ExMovimentacaoController extends ExController {
 				documentosProcesso.add(documentoDoProcesso);
 				ordem++;
 			}
-/*			for(ExDocumento doc : docs){
-				DocumentoDoProcesso documentoDoProcesso = montarDocumentoProcessoPen(doc, produtor, ordem);
-				documentosProcesso.add(documentoDoProcesso);
-				ordem++;
-			}*/
 		}else{
 			DocumentoDoProcesso documentoDoProcesso = montarDocumentoProcessoPen(mob.getExDocumento(), produtor, 1l);
 			documentosProcesso.add(documentoDoProcesso);
@@ -2388,7 +2383,16 @@ public class ExMovimentacaoController extends ExController {
 		ComponenteDigital arquivoDigital = new ComponenteDigital();
 		arquivoDigital.setNome(doc.getSigla() + ".pdf");
 
-		byte[] arquivoBytes = doc.getConteudoBlobPdf();
+		String codEspeciePen = doc.getExFormaDocumento().getCodEspeciePen();
+		if(codEspeciePen == null || codEspeciePen.isEmpty()){
+			//lancar exception de negado para o tipo de documento
+			throw new AplicacaoException("Espécie de documento não permitida para envio para o barramento do PEN");
+		}
+
+		ExMovimentacao mov = Ex.getInstance().getBL().criarMovimentacaoComPDFEstampado(doc.getCadastrante(), doc.getLotaCadastrante(), doc.getPrimeiraVia() != null ? doc.getPrimeiraVia() : doc.getUltimoVolume(), "Gerado PDF estampado para envio PEN", ExTipoMovimentacao.TIPO_MOVIMENTACAO_PDF_ESTAMPADO_PEN);
+
+		byte[] arquivoBytes = mov.getConteudoBlob("doc.pdf");
+
 		Hash hash = new Hash();
 		hash.setValue(IntegracaoPen.fileSha256ToBase64(arquivoBytes));
 		hash.setAlgoritmo("SHA256");
@@ -2411,11 +2415,7 @@ public class ExMovimentacaoController extends ExController {
 		documentoProcesso.setDataHoraDeProducao(DatatypeFactory.newInstance().newXMLGregorianCalendar((GregorianCalendar) Calendar.getInstance()));
 		documentoProcesso.setDataHoraDeRegistro(DatatypeFactory.newInstance().newXMLGregorianCalendar((GregorianCalendar) Calendar.getInstance()));
 
-		String codEspeciePen = doc.getExFormaDocumento().getCodEspeciePen();
-		if(codEspeciePen == null || codEspeciePen.isEmpty()){
-			//lancar exception de negado para o tipo de documento
-			throw new AplicacaoException("Espécie de documento não permitida para envio para o barramento do PEN");
-		}
+
 		Especie especie = new Especie();
 		especie.setCodigo(codEspeciePen);
 
