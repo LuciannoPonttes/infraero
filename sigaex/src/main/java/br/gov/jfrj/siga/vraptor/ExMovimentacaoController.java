@@ -2350,8 +2350,14 @@ public class ExMovimentacaoController extends ExController {
 			documentosProcesso.add(documentoDoProcesso);
 		}
 
+		List<ExMovimentacao> movsEnvioPen = builder.getMob().getMovimentacoesPorTipo(ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECIBO_ENVIO_PEN, true);
+		String nre = null;
+
 		ExDocumento doc = builder.getMob().getExDocumento();
-		String nre = doc.getNumExtDoc();
+
+		if(movsEnvioPen != null && !movsEnvioPen.isEmpty()){
+			nre = doc.getNumExtDoc();
+		}
 
 		String descricao = builder.getMob().getDoc().getDescrDocumento();
 
