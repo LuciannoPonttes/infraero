@@ -82,14 +82,17 @@ import br.gov.jfrj.itextpdf.Documento;
 import br.gov.jfrj.siga.Service;
 import br.gov.jfrj.siga.base.AplicacaoException;
 import br.gov.jfrj.siga.base.Correio;
+import br.gov.jfrj.siga.base.CurrentRequest;
 import br.gov.jfrj.siga.base.Data;
 import br.gov.jfrj.siga.base.GeraMessageDigest;
 import br.gov.jfrj.siga.base.HttpRequestUtils;
 import br.gov.jfrj.siga.base.Par;
 import br.gov.jfrj.siga.base.Prop;
 import br.gov.jfrj.siga.base.RegraNegocioException;
+import br.gov.jfrj.siga.base.RequestInfo;
 import br.gov.jfrj.siga.base.SigaMessages;
 import br.gov.jfrj.siga.base.Texto;
+import br.gov.jfrj.siga.base.UsuarioDeSistemaEnum;
 import br.gov.jfrj.siga.base.util.SetUtils;
 import br.gov.jfrj.siga.base.util.Utils;
 import br.gov.jfrj.siga.bluc.service.BlucService;
@@ -101,13 +104,11 @@ import br.gov.jfrj.siga.cp.CpArquivo;
 import br.gov.jfrj.siga.cp.CpConfiguracao;
 import br.gov.jfrj.siga.cp.CpIdentidade;
 import br.gov.jfrj.siga.cp.CpTipoConfiguracao;
-import br.gov.jfrj.siga.cp.CpTipoMarcadorEnum;
 import br.gov.jfrj.siga.cp.CpToken;
 import br.gov.jfrj.siga.cp.TipoConteudo;
 import br.gov.jfrj.siga.cp.bl.Cp;
 import br.gov.jfrj.siga.cp.bl.CpBL;
 import br.gov.jfrj.siga.cp.bl.CpConfiguracaoBL;
-import br.gov.jfrj.siga.cp.model.enm.CpMarcadorTipoInteressadoEnum;
 import br.gov.jfrj.siga.cp.model.enm.CpMarcadorEnum;
 import br.gov.jfrj.siga.cp.model.enm.CpMarcadorFinalidadeEnum;
 import br.gov.jfrj.siga.cp.model.enm.CpMarcadorFinalidadeGrupoEnum;
@@ -1755,7 +1756,7 @@ public class ExBL extends CpBL {
 						fValido = (subscritor.equivale(doc.getCadastrante())) && (doc.getExTipoDocumento()
 								.getIdTpDoc() == ExTipoDocumento.TIPO_DOCUMENTO_EXTERNO_FOLHA_DE_ROSTO);
 					}
-					if (!fValido || cadastrante != titular)
+					if (!fValido)
 						for (ExMovimentacao m : doc.getMobilGeral().getExMovimentacaoSet()) {
 							if (m.getExTipoMovimentacao()
 									.getIdTpMov() == ExTipoMovimentacao.TIPO_MOVIMENTACAO_INCLUSAO_DE_COSIGNATARIO
@@ -1763,27 +1764,35 @@ public class ExBL extends CpBL {
 									&& subscritor.equivale(m.getSubscritor())) {
 								fValido = true;
 								continue;
-							} else if (m.getExTipoMovimentacao()
-									.getIdTpMov() == ExTipoMovimentacao.TIPO_MOVIMENTACAO_INCLUSAO_DE_COSIGNATARIO
-									&& m.getExMovimentacaoCanceladora() == null && cadastrante != titular) {
-								// Verificar se é substituto do cosignatario do documento
-								fSubstituindoCosignatario = estaSubstituindoSubscritorOuCosignatario(cadastrante, lotaCadastrante, m.getSubscritor(),
-										subscritor);
-								if (fSubstituindoCosignatario) {
-									cosignatario = titular;
-									fValido = true;
-									break;
-									
+							} 							
+						}
+				
+					if ((!fValido || (fValido && doc.isAssinadoPelaPessoaComTokenOuSenha(subscritor))) && cadastrante != titular) { 
+						
+						// Verificar se é substituto do subscritor do documento						
+						if(doc.getSubscritor().equivale(titular)) {	
+							fSubstituindoSubscritor = estaSubstituindoSubscritorOuCosignatario(cadastrante, lotaCadastrante, doc.getSubscritor(),
+									subscritor);
+							fValido = fSubstituindoSubscritor;
+						}
+						
+						if(!fSubstituindoSubscritor) {
+							for (ExMovimentacao m : doc.getMobilGeral().getExMovimentacaoSet()) { // Verifica se é substituto de cossignatário
+								if (m.getExTipoMovimentacao()
+										.getIdTpMov() == ExTipoMovimentacao.TIPO_MOVIMENTACAO_INCLUSAO_DE_COSIGNATARIO
+										&& m.getExMovimentacaoCanceladora() == null &&  titular.equivale(m.getSubscritor()) ) {
+									// Verificar se é substituto do cosignatario do documento
+									fSubstituindoCosignatario = estaSubstituindoSubscritorOuCosignatario(cadastrante, lotaCadastrante, m.getSubscritor(),
+											subscritor);
+									if (fSubstituindoCosignatario) {
+										cosignatario = titular;
+										fValido = true;
+										break;								
+									}
 								}
 							}
-						}
-
-					// Verificar se é substituto do subscritor do documento
-					if(!fSubstituindoCosignatario && cadastrante != titular) {
-						fSubstituindoSubscritor = estaSubstituindoSubscritorOuCosignatario(cadastrante, lotaCadastrante, doc.getSubscritor(),
-								subscritor);
-						fValido = fSubstituindoSubscritor;
-					}
+						}					
+					}	
 				}
 
 				if (fValido == false)
@@ -1861,7 +1870,7 @@ public class ExBL extends CpBL {
 			cancelarAlteracao();
 			log.error(e.getMessage(), e);
 			e.printStackTrace();
-			throw new RuntimeException("Erro ao registrar assinatura.", e);
+			throw new RuntimeException("Erro ao registrar assinatura: " + getRootCauseMessage(e));
 		}
 
 		if (tramitar == null)
@@ -1882,6 +1891,17 @@ public class ExBL extends CpBL {
 		}
 
 		return s;
+	}
+	
+	private String getRootCauseMessage(Exception ex) {
+		Throwable cause = ex;
+		String message = ex.getMessage();
+		while (cause.getCause() != null && cause != cause.getCause()) {
+			cause = cause.getCause();
+			if (cause.getMessage() != null)
+				message = cause.getMessage();
+		}
+		return message;
 	}
 
 	private void criarMovimentacaoAssinadorPor(final DpPessoa cadastrante, final DpLotacao lotaCadastrante,
@@ -4600,7 +4620,7 @@ public class ExBL extends CpBL {
 			cancelarAlteracao();
 			log.error(e.getMessage(), e);
 			e.printStackTrace();
-			throw new RuntimeException("Erro ao registrar assinatura.", e);
+			throw new RuntimeException("Erro ao registrar assinatura." + getRootCauseMessage(e));
 		}
 		return s;
 	}
@@ -5836,7 +5856,8 @@ public class ExBL extends CpBL {
 	public void atualizarWorkFlow(ExDocumento doc) throws AplicacaoException {
 		try {
 			if (doc.getIdDoc() != null) {
-				Service.getWfService().atualizarWorkflowsDeDocumento(doc.getCodigo());
+				if (ContextoPersistencia.getUsuarioDeSistema() == null || ContextoPersistencia.getUsuarioDeSistema() != UsuarioDeSistemaEnum.SIGA_WF)
+					Service.getWfService().atualizarWorkflowsDeDocumento(doc.getCodigo());
 			}
 		} catch (Exception ex) {
 			throw new RuntimeException("Erro ao tentar atualizar estado do workflow", ex);
@@ -5846,8 +5867,9 @@ public class ExBL extends CpBL {
 	public void atualizarWorkFlow(ExMovimentacao mov) throws AplicacaoException {
 		try {
 			if (mov.mob() != null && mov.getIdMov() != null && mov.mob().getIdMobil() != null && mov.mob().doc() != null && mov.mob().doc().getIdDoc() != null) {
-				Service.getWfService().atualizarWorkflowsDeDocumento(
-						mov.getExMobil().getSigla());
+				if (ContextoPersistencia.getUsuarioDeSistema() == null || ContextoPersistencia.getUsuarioDeSistema() != UsuarioDeSistemaEnum.SIGA_WF)
+					Service.getWfService().atualizarWorkflowsDeDocumento(
+							mov.getExMobil().getSigla());
 			}
 		} catch (Exception e) {
 			throw new RuntimeException("Erro ao tentar atualizar estado do workflow", e);

@@ -14,6 +14,8 @@ import com.crivano.swaggerservlet.SwaggerAuthorizationException;
 import com.crivano.swaggerservlet.SwaggerServlet;
 
 import br.gov.jfrj.siga.base.AplicacaoException;
+import br.gov.jfrj.siga.base.CurrentRequest;
+import br.gov.jfrj.siga.base.RequestInfo;
 import br.gov.jfrj.siga.base.log.RequestLoggerFilter;
 import br.gov.jfrj.siga.dp.DpLotacao;
 import br.gov.jfrj.siga.dp.DpPessoa;
@@ -37,6 +39,15 @@ public class ApiContext implements Closeable {
 			buscarEValidarUsuarioLogado();
 		}
 		
+		try {
+			CurrentRequest.set(new RequestInfo(null, SwaggerServlet.getHttpServletRequest(),
+					SwaggerServlet.getHttpServletResponse()));
+		} catch (NullPointerException ex) {
+			// Engolindo exceção para garantir que está classe pode ser utilizada mesmo fora
+			// de uma chamada à API REST
+			CurrentRequest.set(null);
+		}
+		
 		this.transacional = transacional;
 		em = ExStarter.emf.createEntityManager();
 		ContextoPersistencia.setEntityManager(em);
@@ -58,7 +69,7 @@ public class ApiContext implements Closeable {
 		if (!RequestLoggerFilter.isAplicacaoException(e)) {
 			RequestLoggerFilter.logException(null, inicio, e);
 		}
-		ContextoPersistencia.setDt(null);
+		ContextoPersistencia.removeAll();
 	}
 
 	@Override
@@ -73,7 +84,7 @@ public class ApiContext implements Closeable {
 		} finally {
 			em.close();
 			ContextoPersistencia.setEntityManager(null);
-			ContextoPersistencia.setDt(null);
+			ContextoPersistencia.removeAll();
 		}
 	}
 

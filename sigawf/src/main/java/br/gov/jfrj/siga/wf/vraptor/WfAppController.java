@@ -364,7 +364,7 @@ public class WfAppController extends WfController {
 	@Post
 	@Path("/app/procedimento/{sigla}/pegar")
 	public void pegar(String sigla, String siglaPrincipal) throws Exception {
-		WfProcedimento pi = dao().consultarPorSigla(sigla, WfProcedimento.class);
+		WfProcedimento pi = dao().consultarPorSigla(sigla, WfProcedimento.class, null);
 
 		Wf.getInstance().getBL().pegar(pi, getTitular(), getLotaTitular(), getIdentidadeCadastrante());
 
@@ -379,7 +379,7 @@ public class WfAppController extends WfController {
 	@Post
 	@Path("/app/procedimento/{sigla}/redirecionar")
 	public void redirecionar(String sigla, String siglaPrincipal, Long tdId) throws Exception {
-		WfProcedimento pi = dao().consultarPorSigla(sigla, WfProcedimento.class);
+		WfProcedimento pi = dao().consultarPorSigla(sigla, WfProcedimento.class, null);
 
 		if (tdId == null)
 			throw new RuntimeException("Identificador da definição de tarefa não pode ser nulo");
@@ -389,6 +389,21 @@ public class WfAppController extends WfController {
 			throw new RuntimeException("Identificador da definição de tarefa não encontrado");
 
 		Wf.getInstance().getBL().redirecionar(pi, idx, getTitular(), getLotaTitular(), getIdentidadeCadastrante());
+
+		if (siglaPrincipal != null) {
+			result.redirectTo("/../sigaex/app/expediente/doc/exibir?sigla=" + siglaPrincipal);
+			return;
+		}
+		result.redirectTo(this).procedimento(pi.getId());
+	}
+
+	@Transacional
+	@Post
+	@Path("/app/procedimento/{sigla}/terminar")
+	public void terminar(String sigla, String siglaPrincipal) throws Exception {
+		WfProcedimento pi = dao().consultarPorSigla(sigla, WfProcedimento.class, null);
+
+		Wf.getInstance().getBL().terminar(pi, getTitular(), getLotaTitular(), getIdentidadeCadastrante());
 
 		if (siglaPrincipal != null) {
 			result.redirectTo("/../sigaex/app/expediente/doc/exibir?sigla=" + siglaPrincipal);

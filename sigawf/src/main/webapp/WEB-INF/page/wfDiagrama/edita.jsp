@@ -33,7 +33,13 @@
 	<script src="/siga/javascript/angucomplete-alt/angucomplete-alt.js"></script>
 
 	<div class="container-fluid content" ng-app="app" ng-controller="ctrl">
-		<h2>Editar Diagrama ${pd.sigla}</h2>
+		<h2>
+			<c:choose>
+				<c:when test="${param.duplicar}">Duplicar</c:when>
+				<c:otherwise>Editar</c:otherwise>
+			</c:choose>
+			Diagrama ${pd.sigla}
+		</h2>
 
 		<input type="hidden" name="postback" value="1" />
 		<fieldset title="Dados Básicos">
@@ -137,7 +143,7 @@
 											class="btn btn-secondary dropdown-toggle">{{$index+1}}</button>
 										<div aria-labelledby="dropBtn" class="dropdown-menu pt-0 pb-0">
 											<button
-												ng-click="data.workflow.tarefa.splice($index, 0, {});"
+												ng-click="data.workflow.tarefa.splice($index + 1, 0, {});"
 												class="btn btn-link p-2" ng-disabled>
 												<i class="fa fa-fa fa-plus"></i>
 											</button>
@@ -207,7 +213,8 @@
 										<option value="RESPONSAVEL">Tabelado</option>
 										<option value="LOTACAO">Lotação</option>
 										<option value="PESSOA">Pessoa</option>
-										<option value="PROCEDIMENTO_TITULAR">Procedimento: Titular</option>
+										<option value="PROCEDIMENTO_TITULAR">Procedimento:
+											Titular</option>
 										<option value="PROCEDIMENTO_LOTA_TITULAR">Procedimento:
 											Lotação do Titular</option>
 										<option value="PRINCIPAL_CADASTRANTE">Principal:
@@ -346,7 +353,7 @@
 														<div aria-labelledby="dropBtn"
 															class="dropdown-menu pt-0 pb-0">
 															<button
-																ng-click="tarefaItem.variavel.splice($index, 0, {});"
+																ng-click="tarefaItem.variavel.splice($index + 1, 0, {});"
 																class="btn btn-link p-2" ng-disabled>
 																<i class="fa fa-fa fa-plus"></i>
 															</button>
@@ -437,7 +444,7 @@
 														<div aria-labelledby="dropBtn"
 															class="dropdown-menu pt-0 pb-0">
 															<button
-																ng-click="tarefaItem.desvio.splice($index, 0, {});"
+																ng-click="tarefaItem.desvio.splice($index + 1, 0, {});"
 																class="btn btn-link p-2" ng-disabled>
 																<i class="fa fa-fa fa-plus"></i>
 															</button>
@@ -491,13 +498,14 @@
 									class="label-clue fa fa-asterisk"></i><input
 									ng-model="tarefaItem.assunto" name="assunto" ng-required="true"
 									id="assunto" type="text" class="form-control"></label> </section>
-								<section ng-show="tarefaItem.tipo == 'EMAIL'"
+								<section
+									ng-show="tarefaItem.tipo == 'EMAIL' || tarefaItem.tipo == 'EXECUTAR'"
 									class="col col-12 form-group"> <label for="texto"
-									title="" class="label">Texto<i
+									title="" class="mb-0">Texto<i
 									title="Preenchimento obrigatório"
-									class="label-clue fa fa-asterisk"></i> <textarea
-										ng-model="tarefaItem.texto" name="texto" ng-required="true"
-										id="texto" class="form-control"></textarea></label> </section>
+									class="label-clue fa fa-asterisk"></i></label> <textarea
+									ng-model="tarefaItem.conteudo" name="texto" ng-required="true"
+									id="conteudo" class="form-control"></textarea> </section>
 							</div>
 						</div>
 					</div>
@@ -529,4 +537,45 @@
 		</div>
 	</div>
 
+	<script>
+		$(document).ready(function() {
+			updateContainer();
+			$(window).resize(function() {
+				updateContainer();
+			});
+		});
+
+		function updateContainer() {
+			var smallwidth = $('#graph-workflow').width();
+			var smallheight = $('#graph-workflow').height();
+			var smallsvg = $('#graph-workflow :first-child').first();
+			var smallviewbox = smallsvg.attr('viewBox');
+
+			if (smallheight > smallwidth * 120 / 100)
+				smallheight = smallwidth * 120 / 100;
+
+			if (smallsvg && smallsvg[0] && smallsvg[0].viewBox
+					&& smallsvg[0].viewBox.baseVal) {
+
+				console.log('updated')
+
+				var baseVal = smallsvg[0].viewBox.baseVal;
+				var width = smallwidth;
+				var height = smallwidth * baseVal.height / baseVal.width;
+				if (height > smallheight) {
+					width = width * smallheight / height;
+					height = smallheight;
+				}
+				smallsvg.attr('width', width);
+				smallsvg.attr('height', height);
+			} else if (typeof smallviewbox != 'undefined') {
+				var a = smallviewbox.split(' ');
+
+				// set attrs and 'resume' force 
+				smallsvg.attr('width', smallwidth);
+				smallsvg.attr('height', smallwidth * a[3] / a[2]);
+			}
+
+		}
+	</script>
 </siga:pagina>

@@ -1214,7 +1214,7 @@ public class ExDocumentoController extends ExController {
 
 		if (Ex.getInstance()
 				.getComp()
-				.podeReceberEletronico(getTitular(), getLotaTitular(),
+				.deveReceberEletronico(getTitular(), getLotaTitular(),
 						exDocumentoDTO.getMob())) {
 			SigaTransacionalInterceptor.upgradeParaTransacional();
 			Ex.getInstance()
@@ -1262,7 +1262,7 @@ public class ExDocumentoController extends ExController {
 
 		if (Ex.getInstance()
 				.getComp()
-				.podeReceberEletronico(getTitular(), getLotaTitular(),
+				.deveReceberEletronico(getTitular(), getLotaTitular(),
 						exDocumentoDTO.getMob())) {
 			SigaTransacionalInterceptor.upgradeParaTransacional();
 			Ex.getInstance()
@@ -1328,17 +1328,6 @@ public class ExDocumentoController extends ExController {
 			dao().gravar(acesso);
 		}
 
-		if (Ex.getInstance()
-				.getComp()
-				.podeReceberEletronico(getTitular(), getLotaTitular(),
-						exDocumentoDto.getMob())) {
-			SigaTransacionalInterceptor.upgradeParaTransacional();
-			Ex.getInstance()
-					.getBL()
-					.receber(getCadastrante(), getLotaTitular(),
-							exDocumentoDto.getMob(), new Date());
-		}
-
 		if (exDocumentoDto.getMob() == null
 				|| exDocumentoDto.getMob().isGeral()) {
 			if (exDocumentoDto.getMob().getDoc().isFinalizado()) {
@@ -1350,6 +1339,17 @@ public class ExDocumentoController extends ExController {
 							.getPrimeiraVia());
 				}
 			}
+		}
+
+		if (Ex.getInstance()
+				.getComp()
+				.deveReceberEletronico(getTitular(), getLotaTitular(),
+						exDocumentoDto.getMob())) {
+			SigaTransacionalInterceptor.upgradeParaTransacional();
+			Ex.getInstance()
+					.getBL()
+					.receber(getCadastrante(), getLotaTitular(),
+							exDocumentoDto.getMob(), new Date());
 		}
 
 		final ExDocumentoVO docVO = new ExDocumentoVO(exDocumentoDto.getDoc(),
@@ -1428,18 +1428,6 @@ public class ExDocumentoController extends ExController {
 			assertAcesso(exDocumentoDto);
 		}
 		
-		if (recebimentoAutomatico) {				
-			if (Ex.getInstance().getComp().podeReceberEletronico(getTitular(), getLotaTitular(), exDocumentoDto.getMob())) {
-				SigaTransacionalInterceptor.upgradeParaTransacional();
-				Ex.getInstance().getBL().receber(getCadastrante(), getLotaTitular(),exDocumentoDto.getMob(), new Date());
-			}														
-		} else if (Ex.getInstance().getComp().podeReceber(getTitular(), getLotaTitular(),exDocumentoDto.getMob())
-				|| (exDocumentoDto.getDoc() != null && exDocumentoDto.getDoc().getMobilDefaultParaReceberJuntada() != null && exDocumentoDto.getDoc().getMobilDefaultParaReceberJuntada().getMobilPrincipal() != null 
-				&& Ex.getInstance().getComp().podeReceber(getTitular(), getLotaTitular(),exDocumentoDto.getDoc().getMobilDefaultParaReceberJuntada().getMobilPrincipal()) 
-				&& exDocumentoDto.getDoc().getMobilDefaultParaReceberJuntada().isJuntado())) {
-			recebimentoPendente = true;			
-		} 		
-
 		if (exDocumentoDto.getMob() == null
 				|| exDocumentoDto.getMob().isGeral()) {
 			if (exDocumentoDto.getMob().getDoc().isFinalizado()) {
@@ -1452,6 +1440,18 @@ public class ExDocumentoController extends ExController {
 				}
 			}
 		}		
+
+		if (recebimentoAutomatico) {				
+			if (Ex.getInstance().getComp().deveReceberEletronico(getTitular(), getLotaTitular(), exDocumentoDto.getMob())) {
+				SigaTransacionalInterceptor.upgradeParaTransacional();
+				Ex.getInstance().getBL().receber(getCadastrante(), getLotaTitular(),exDocumentoDto.getMob(), new Date());
+			}														
+		} else if (Ex.getInstance().getComp().podeReceber(getTitular(), getLotaTitular(),exDocumentoDto.getMob())
+				|| (exDocumentoDto.getDoc() != null && exDocumentoDto.getDoc().getMobilDefaultParaReceberJuntada() != null && exDocumentoDto.getDoc().getMobilDefaultParaReceberJuntada().getMobilPrincipal() != null 
+				&& Ex.getInstance().getComp().podeReceber(getTitular(), getLotaTitular(),exDocumentoDto.getDoc().getMobilDefaultParaReceberJuntada().getMobilPrincipal()) 
+				&& exDocumentoDto.getDoc().getMobilDefaultParaReceberJuntada().isJuntado())) {
+			recebimentoPendente = true;			
+		} 		
 
 		final ExDocumentoVO docVO = new ExDocumentoVO(exDocumentoDto.getDoc(),
 				exDocumentoDto.getMob(), getCadastrante(), getTitular(),

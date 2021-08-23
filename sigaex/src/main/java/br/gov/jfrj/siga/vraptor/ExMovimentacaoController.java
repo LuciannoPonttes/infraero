@@ -1146,6 +1146,12 @@ public class ExMovimentacaoController extends ExController {
 		result.include("doc", doc);
 		result.include("subscritorSel", new DpPessoaSelecao());
 		result.include("documentoRefSel", documentoRefSel);
+		if (doc.temAcompanhamentoDeProtocolo()) {
+    		result.include("msgCabecClass", "alert-warning");
+			result.include("mensagemCabec", "Este documento possui acompanhamento do protocolo, portanto "
+					+ "o histórico do documento juntado também será visível no acompanhamento do protocolo.");
+		}
+		
 	}
 
 	@Transacional
@@ -2627,7 +2633,7 @@ public class ExMovimentacaoController extends ExController {
 			
 			
 		} else {
-			ExDocumentoController.redirecionarParaExibir(result, builder.getMob().getExDocumento().getSigla());
+			ExDocumentoController.redirecionarParaExibir(result, builder.getMob().getSigla());
 		}
 	}
 

@@ -32,7 +32,6 @@ import javax.persistence.Transient;
 import org.hibernate.annotations.BatchSize;
 
 import com.crivano.jflow.model.ProcessInstance;
-import com.crivano.jflow.model.TaskDefinition;
 import com.crivano.jflow.model.enm.ProcessInstanceStatus;
 
 import br.gov.jfrj.siga.Service;
@@ -47,12 +46,14 @@ import br.gov.jfrj.siga.dp.DpPessoa;
 import br.gov.jfrj.siga.ex.service.ExService;
 import br.gov.jfrj.siga.model.ActiveRecord;
 import br.gov.jfrj.siga.model.Objeto;
+import br.gov.jfrj.siga.model.Selecionavel;
 import br.gov.jfrj.siga.parser.PessoaLotacaoParser;
 import br.gov.jfrj.siga.sinc.lib.Desconsiderar;
 import br.gov.jfrj.siga.wf.dao.WfDao;
 import br.gov.jfrj.siga.wf.logic.PodeSim;
 import br.gov.jfrj.siga.wf.logic.WfPodePegar;
 import br.gov.jfrj.siga.wf.logic.WfPodeRedirecionar;
+import br.gov.jfrj.siga.wf.logic.WfPodeTerminar;
 import br.gov.jfrj.siga.wf.model.enm.WfPrioridade;
 import br.gov.jfrj.siga.wf.model.enm.WfTipoDePrincipal;
 import br.gov.jfrj.siga.wf.model.enm.WfTipoDeTarefa;
@@ -64,7 +65,7 @@ import br.gov.jfrj.siga.wf.util.WfResp;
 @BatchSize(size = 500)
 @Table(name = "sigawf.wf_procedimento")
 public class WfProcedimento extends Objeto
-		implements ProcessInstance<WfDefinicaoDeProcedimento, WfDefinicaoDeTarefa, WfResp> {
+		implements ProcessInstance<WfDefinicaoDeProcedimento, WfDefinicaoDeTarefa, WfResp>, Selecionavel {
 	public static ActiveRecord<WfProcedimento> AR = new ActiveRecord<>(WfProcedimento.class);
 
 	@Id
@@ -172,8 +173,8 @@ public class WfProcedimento extends Objeto
 	@Override
 	public void pause(String eventoNome, WfResp responsavel) {
 		this.eventoNome = eventoNome;
-		this.eventoPessoa = ((WfResp) responsavel).getPessoa();
-		this.eventoLotacao = ((WfResp) responsavel).getLotacao();
+		this.eventoPessoa = responsavel != null ? responsavel.getPessoa() : null;
+		this.eventoLotacao = responsavel != null ? responsavel.getLotacao() : null;
 		this.eventoData = new Date();
 		status = ProcessInstanceStatus.PAUSED;
 	}
@@ -189,6 +190,10 @@ public class WfProcedimento extends Objeto
 
 	@Override
 	public void end() {
+		this.eventoNome = null;
+		this.eventoPessoa = null;
+		this.eventoLotacao = null;
+		this.eventoData = null;
 		indiceCorrente = null;
 		status = ProcessInstanceStatus.FINISHED;
 		this.setHisDtFim(WfDao.getInstance().consultarDataEHoraDoServidor());
@@ -566,6 +571,11 @@ public class WfProcedimento extends Objeto
 		set.add(AcaoVO.builder().nome("_Redirecionar").icone("arrow_branch").modal("redirecionarModal")
 				.exp(new WfPodeRedirecionar(this, titular, lotaTitular)).build());
 
+		set.add(AcaoVO.builder().nome("_Terminar").icone("delete")
+				.msgConfirmacao("Esta operação não pode ser revertida. Tem certeza que deseja terminar o procedimento?")
+				.exp(new WfPodeTerminar(this, titular, lotaTitular))
+				.acao("/app/procedimento/" + getSiglaCompacta() + "/terminar").post(true).build());
+
 		return set;
 	}
 
@@ -594,7 +604,7 @@ public class WfProcedimento extends Objeto
 
 		if (!titular.equivale(getEventoPessoa()) && !lotaTitular.equivale(getEventoLotacao())) {
 			if (getEventoPessoa() != null && getEventoLotacao() != null)
-				return "Esta tarefa será desempenhada por " + titular.getSigla() + " na lotação "
+				return "Esta tarefa será desempenhada por " + getEventoPessoa().getSigla() + " na lotação "
 						+ getEventoLotacao().getSigla();
 			if (getEventoPessoa() != null)
 				return "Esta tarefa será desempenhada por " + getEventoPessoa().getSigla();
@@ -748,6 +758,12 @@ public class WfProcedimento extends Objeto
 	@Override
 	public String getEvent() {
 		return getEventoNome();
+	}
+
+	@Override
+	public String getDescricao() {
+		return getDefinicaoDeProcedimento().getDescricao()
+				+ (getDefinicaoDeTarefaCorrente() != null ? " - " + getDefinicaoDeTarefaCorrente().getNome() : "");
 	}
 
 }
