@@ -37,9 +37,9 @@ import org.hibernate.cfg.Configuration;
 import org.jboss.logging.Logger;
 
 //import br.gov.jfrj.siga.base.auditoria.filter.ThreadFilter;
-import br.gov.jfrj.siga.ex.bl.CurrentRequest;
+import br.gov.jfrj.siga.base.CurrentRequest;
 import br.gov.jfrj.siga.ex.bl.Ex;
-import br.gov.jfrj.siga.ex.bl.RequestInfo;
+import br.gov.jfrj.siga.base.RequestInfo;
 import br.gov.jfrj.siga.model.ContextoPersistencia;
 import br.gov.jfrj.siga.model.dao.ModeloDao;
 import br.gov.jfrj.siga.base.Prop;
