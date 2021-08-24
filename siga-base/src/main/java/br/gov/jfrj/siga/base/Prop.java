@@ -164,6 +164,7 @@ public class Prop {
 		provider.addPrivateProperty("/siga.autenticacao.senha", provider.getProp("/siga.jwt.secret"));
 		provider.addPublicProperty("/siga.jwt.token.ttl", "3600");
 		provider.addPublicProperty("/siga.local", null);
+		provider.addPublicProperty("/siga.uf.padrao", null);
 		provider.addPublicProperty("/siga.mensagens", null);
 		provider.addPublicProperty("/siga.mesa.carrega.lotacao", "true");
 		provider.addPublicProperty("/siga.mesa.nao.revisar.temporarios", "false");
@@ -212,7 +213,7 @@ public class Prop {
 		provider.addPublicProperty("/siga.sgp.dcn.url", "/sigarhaq2");
 		provider.addPublicProperty("/siga.sgp.cst.url", "/sigarhdadoscadastrais");
 		provider.addPublicProperty("/siga.sgp.lot.url", "/sigarhlotacao");
-		provider.addPublicProperty("/siga.sgp.trn.url", "/sigatr");
+		provider.addPublicProperty("/siga.sgp.trn.url", "/sigptreinamento");
 		provider.addPublicProperty("/siga.sgp.terc.url", "/sigarhterceirizados");
 		/*
 		provider.addPublicProperty("/sigaex.classificacao.mascara.entrada",

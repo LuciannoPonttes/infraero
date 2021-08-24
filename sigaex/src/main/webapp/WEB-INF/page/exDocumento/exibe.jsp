@@ -289,7 +289,7 @@
 							</div>
 						</c:when>
 						<c:when test="${docVO.doc.pdf}">
-							<c:set var="url" value="/sigaex/app/arquivo/exibir?arquivo=${docVO.doc.referenciaPDF}"/>
+							<c:set var="urlCapturado" value="/sigaex/app/arquivo/exibir?arquivo=${docVO.doc.referenciaPDF}"/>
 							<iframe style="display: block;" name="painel" id="painel"
 								width="100%" frameborder="0" scrolling="auto"></iframe>			
 							<script>
@@ -637,7 +637,7 @@
 												<td style="padding-left:.25em; padding-right: 0"><a href="javascript:postToUrl('/sigaex/app/expediente/mov/cancelar_movimentacao_gravar?id=${marca.exMovimentacao.idMov}&sigla=${sigla}')" title="${marca.exMovimentacao.expliquePodeCancelar(titular, lotaTitular)}"><i class="far fa-trash-alt"></i></a></td>
 											</c:when>
 											<c:otherwise>
-												<td style="padding-left:0; padding-right: 0"></td>
+												<td style="padding-left:.25em; padding-right: 0"><a title="${marca.exMovimentacao.expliquePodeCancelar(titular, lotaTitular)}"><i class="far fa-trash-alt text-secondary"></i></a></td>
 											</c:otherwise>
 										</c:choose>
 										<td style="padding-left:0; padding-right: 1.25rem"></td>
@@ -1565,7 +1565,8 @@
 		containerArquivosAuxiliares.css({'visibility':'visible', 'opacity':'1'});				
 	}
 	window.onload = function () { 
-		document.getElementById('painel').src = montarUrlDocPDF('${url}',document.getElementById('visualizador').value); 
+		if (document.getElementById('painel'))
+			document.getElementById('painel').src = montarUrlDocPDF('${urlCapturado}',document.getElementById('visualizador').value); 
 	} 
 </script>
 </siga:pagina>

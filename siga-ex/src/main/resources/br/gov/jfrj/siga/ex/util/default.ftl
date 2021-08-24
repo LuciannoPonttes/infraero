@@ -2160,10 +2160,9 @@ Pede deferimento.</span><br/><br/><br/>
     FIM TITULO -->
 [/#macro]
 
-[#macro inicioSubscritor]
-    <!-- INICIO SUBSCRITOR [#nested/] -->
+[#macro inicioSubscritor sigla]
+    <!-- INICIO SUBSCRITOR [#nested/] --><!-- SIGLA ${sigla!} -->
 [/#macro]
-
 
 [#macro fimSubscritor]
     <!-- FIM SUBSCRITOR [#nested/] -->
@@ -2426,8 +2425,9 @@ Pede deferimento.</span><br/><br/><br/>
    <!-- INICIO ASSINATURA -->
 [/#if]
 <p style="font-family: Arial; font-size: 11pt;" align="center">
+	<br/>
     [#if (doc.subscritor)??]
-       [@inicioSubscritor]${(doc.subscritor.idPessoa)!}[/@inicioSubscritor]
+       [@inicioSubscritor sigla=doc.codigoCompacto]${(doc.subscritor.idPessoa)!}[/@inicioSubscritor]
     [/#if]
     [#if (doc.nmSubscritor)??]
         ${doc.nmSubscritor}
@@ -2470,7 +2470,7 @@ Pede deferimento.</span><br/><br/><br/>
                 [#if (doc.mobilGeral.exMovimentacaoSet)??]
         [#list doc.mobilGeral.exMovimentacaoSet as mov]
                     [#if (mov.exTipoMovimentacao.idTpMov)! == 24]
-                        [@inicioSubscritor]${(mov.subscritor.idPessoa)}[/@inicioSubscritor]
+                        [@inicioSubscritor sigla=doc.codigoCompacto]${(mov.subscritor.idPessoa)}[/@inicioSubscritor]
                         <br/><br/><br/>
                         [#if mov.nmSubscritor??]
                             ${mov.nmSubscritor}

@@ -4494,6 +4494,9 @@ public class ExCompetenciaBL extends CpCompetenciaBL {
 
 		if(!podeSerTransferido(mob))
 			return false;
+		
+		if (mob.isEmTransito())
+			return false;
 
 		return podeMovimentar(titular, lotaTitular, mob)
 				&& getConf().podePorConfiguracao(titular, lotaTitular,
@@ -4550,7 +4553,7 @@ public class ExCompetenciaBL extends CpCompetenciaBL {
 			return false;
 
 		return (mob.isVia() || mob.isVolume())
-				&& !mob.isEmTransito() && !mob.isJuntado()
+				&& !mob.isJuntado()
 				&& !mob.isApensadoAVolumeDoMesmoProcesso()
 				&& !mob.isArquivado()
 				&& (!mob.doc().isPendenteDeAssinatura() || (mob.doc().getExTipoDocumento()

@@ -22,6 +22,7 @@
 <%@ attribute name="urlAcao" required="false"%>
 <%@ attribute name="urlSelecionar" required="false"%>
 <%@ attribute name="onchange" required="false"%>
+<%@ attribute name="onchangeid" required="false"%>
 <%@ attribute name="onblur" required="false"%>
 <%@ attribute name="prefix" required="false"%>
 <%@ attribute name="matricula" required="false"%>
@@ -155,8 +156,11 @@ self.retorna_${propriedade}${tipoSel} = function(id, sigla, descricao) {
 	
 	<c:if test="${reler == 'ajax'}">
 		sbmt('${empty idAjax ? propriedade : idAjax}');
+	</c:if>
+	
+	<c:if test="${not empty onchangeid}">
+		${onchangeid};
 	</c:if> 
-
 }
  
  

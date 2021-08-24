@@ -836,6 +836,13 @@ public class ExMobil extends AbstractExMobil implements Serializable, Selecionav
 	 * Verifica se o mobil está arquivado corrente
 	 */
 	public boolean isArquivadoCorrente() {
+		if (isGeral() && doc().isFinalizado() && doc().getExMobilSet() != null) {
+			for (ExMobil m : doc().getExMobilSet()) {
+				if ((m.isVia() || m.isUltimoVolume()) && !m.isArquivado())
+					return false;
+			}
+			return true;
+		}
 		return sofreuMov(ExTipoMovimentacao.TIPO_MOVIMENTACAO_ARQUIVAMENTO_CORRENTE,
 				ExTipoMovimentacao.TIPO_MOVIMENTACAO_DESARQUIVAMENTO_CORRENTE, getMobilParaMovimentarDestinacao());
 	}
@@ -899,13 +906,16 @@ public class ExMobil extends AbstractExMobil implements Serializable, Selecionav
 	public boolean isEmTransito() {
 		if (isApensadoAVolumeDoMesmoProcesso())
 			return false;
-		return sofreuMov(new long[] { ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA,
+		return getTramitePendente() != null;
+
+	}
+	
+	public ExMovimentacao getTramitePendente() {
+		return getUltimaMovimentacao(new long[] { ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA,
 				ExTipoMovimentacao.TIPO_MOVIMENTACAO_DESPACHO_TRANSFERENCIA,
 				ExTipoMovimentacao.TIPO_MOVIMENTACAO_DESPACHO_TRANSFERENCIA_EXTERNA,
-				ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA_EXTERNA},
-
-				ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECEBIMENTO);
-
+				ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA_EXTERNA },new long[] { ExTipoMovimentacao.TIPO_MOVIMENTACAO_RECEBIMENTO },
+				this, false, null);
 	}
 
 	/**

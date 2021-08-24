@@ -168,6 +168,11 @@ public class GcBL {
 		return mov;
 	}
 
+	public void atualizarListaMovimentacoes(GcInformacao inf, GcMovimentacao mov) {
+		inf.getMovs().remove(mov);
+		inf.getMovs().add(mov);
+	}
+	
 	public Date dt() {
 		if (this.dt == null)
 			this.dt = so.dao().dt();
@@ -206,12 +211,15 @@ public class GcBL {
 				if (inf.getId() == 0)
 					inf.save();
 				mov.setInf(inf);
-				if (mov.getMovCanceladora() != null)
+				if (mov.getMovCanceladora() != null) {
+					if (mov.getMovCanceladora().getHisIdcIni() == null)
+						mov.getMovCanceladora().setHisIdcIni(idc);
 					mov.getMovCanceladora().save();
+				}
 				mov.save();
 			}
 		}
-		atualizarInformacaoPorMovimentacoes(inf);
+		//atualizarInformacaoPorMovimentacoes(inf);
 		atualizarTags(inf);
 		inf.save();
 		atualizarMarcas(inf);
@@ -280,12 +288,15 @@ public class GcBL {
 
 	public void atualizarInformacaoPorMovimentacoes(GcInformacao inf)
 			throws AplicacaoException {
+		
 		if (inf.getMovs() == null)
 			return;
 
 		ArrayList<GcMovimentacao> movs = new ArrayList<GcMovimentacao>(
 				inf.getMovs().size());
+		
 		movs.addAll(inf.getMovs());
+
 		Collections.reverse(movs);
 
 		for (GcMovimentacao mov : movs) {
@@ -955,7 +966,7 @@ public class GcBL {
 		return sb.toString();
 	}
 
-	private String getSiglaSRCompacta(String sigla){
+	private String getSiglaSRouGCCompacta(String sigla){
 		return sigla.replace("-", "").replace("/", "");
 	}
 	
@@ -982,15 +993,15 @@ public class GcBL {
 				if (matcherSigla.group(1).toUpperCase().equals("GC")) {
 					infoReferenciada = GcInformacao.findBySigla(sigla);
 					matcherSigla.appendReplacement(sb, "<a href=\""
-							+ URL_SIGA_GC + URLEncoder.encode(sigla, "UTF-8")
+							+ URL_SIGA_GC + URLEncoder.encode(getSiglaSRouGCCompacta(sigla), "UTF-8")
 							+ "\">" + sigla + " - "
 							+ infoReferenciada.getArq().getTitulo() + "</a>");
 				}
 				// serviço
 				else if (matcherSigla.group(1).toUpperCase().equals("SR")) {
 					matcherSigla.appendReplacement(sb, "<a href=\""
-							+ URL_SIGA_SR + URLEncoder.encode(getSiglaSRCompacta(sigla), "UTF-8")
-							+ "\">" + getSiglaSRCompacta(sigla) + "</a>");
+							+ URL_SIGA_SR + URLEncoder.encode(getSiglaSRouGCCompacta(sigla), "UTF-8")
+							+ "\">" + getSiglaSRouGCCompacta(sigla) + "</a>");
 				}
 				// documento
 				else {

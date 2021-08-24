@@ -69,8 +69,8 @@ import br.gov.jfrj.siga.base.Prop;
 import br.gov.jfrj.siga.base.RegraNegocioException;
 import br.gov.jfrj.siga.base.SigaMessages;
 import br.gov.jfrj.siga.base.SigaModal;
-import br.gov.jfrj.siga.base.Texto;
 import br.gov.jfrj.siga.base.TipoResponsavelEnum;
+import br.gov.jfrj.siga.base.util.Texto;
 import br.gov.jfrj.siga.base.util.Utils;
 import br.gov.jfrj.siga.cp.CpTipoConfiguracao;
 import br.gov.jfrj.siga.cp.CpToken;
@@ -370,6 +370,10 @@ public class ExMovimentacaoController extends ExController {
 			throw new AplicacaoException("Arquivo Auxiliar não pode ser anexado");
 		}
 
+		if (mob.isArquivado()) {
+			throw new AplicacaoException("Inclusão de arquivo auxiliar não é permitida em documentos arquivados");
+		}
+
 		if(!Ex.getInstance().getComp()
 				.podeAnexarArquivoAuxiliar(getTitular(), getLotaTitular(), mob)) {
 			throw new AplicacaoException("Arquivo Auxiliar não pode ser anexado");
@@ -422,7 +426,7 @@ public class ExMovimentacaoController extends ExController {
 		
 		String fileExtension = arquivo.getFileName().substring(arquivo.getFileName().lastIndexOf("."));
 		
-		if (fileExtension.equals(".bat") || fileExtension.equals(".exe") || fileExtension.equals(".sh") || fileExtension.equals(".dll") ) {
+		if (fileExtension.equals(".bat") || fileExtension.equals(".exe") || fileExtension.equals(".sh") || fileExtension.equals(".dll")) {
 			throw new AplicacaoException(
 					"Extensão " + fileExtension + " inválida para inclusão do arquivo.");
 		}
@@ -4868,23 +4872,33 @@ public class ExMovimentacaoController extends ExController {
 		Long idOrgaoUsuario = doc.getOrgaoUsuario().getId();
 		Long idOrgaoUsuarioCadastrante = getCadastrante().getOrgaoUsuario()
 				.getId();
+		Long idLotDefault = null;
 
 		siglaSubscritor = PublicacaoDJEBL.obterUnidadeDocumento(doc);
 		siglaCadastrante = getCadastrante().getLotacao().getSigla();
 		siglaTitular = getLotaTitular().getSigla();
 		lotFiltro = new DpLotacao();
 
-		lotFiltro.setOrgaoUsuario(doc.getOrgaoUsuario());
+		lotFiltro.setOrgaoUsuario(doc.getOrgaoUsuario());		
 		lotFiltro.setSigla(siglaSubscritor);
+	    if (lotFiltro.getSigla().startsWith("-"))
+	    	lotFiltro.setSigla(lotFiltro.getSigla().substring(1));
 		lotSubscritor = dao().consultarPorSigla(lotFiltro);
 
-		lotacoes.add(lotSubscritor);
+		if (lotSubscritor != null) {
+			lotacoes.add(lotSubscritor);
+			idLotDefault = lotSubscritor.getId();
+		}
 
 		if (!siglaSubscritor.equals(siglaCadastrante)
 				&& idOrgaoUsuarioCadastrante.equals(idOrgaoUsuario)) {
 			lotFiltro.setSigla(siglaCadastrante);
 			lotCadastrante = dao().consultarPorSigla(lotFiltro);
-			lotacoes.add(lotCadastrante);
+			if (lotCadastrante != null) {
+				lotacoes.add(lotCadastrante);
+				if (idLotDefault == null)
+					idLotDefault = lotCadastrante.getId();
+			}	
 		}
 
 		if (!siglaSubscritor.equals(siglaTitular)
@@ -4894,11 +4908,16 @@ public class ExMovimentacaoController extends ExController {
 						.getOrgaoUsuario().getId().equals(idOrgaoUsuario))) {
 			lotFiltro.setSigla(siglaTitular);
 			lotTitular = dao().consultarPorSigla(lotFiltro);
-			lotacoes.add(lotTitular);
+			if (lotTitular != null) {
+				lotacoes.add(lotTitular);
+			  	 if (idLotDefault == null)
+					idLotDefault = lotTitular.getId();
+			}	
 		}
-		return new ListaLotPubl(lotacoes, lotSubscritor.getId());
+		
+		return new ListaLotPubl(lotacoes, idLotDefault);
 	}
-
+	
 	private void validarExisteLotacao(ExDocumento doc) {
 		if (doc.getTitular() != null) {
 			if (doc.getLotaTitular() == null) {

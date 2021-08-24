@@ -52,7 +52,7 @@ import org.jboss.logging.Logger;
 
 import br.gov.jfrj.siga.base.AplicacaoException;
 import br.gov.jfrj.siga.base.Prop;
-import br.gov.jfrj.siga.base.Texto;
+import br.gov.jfrj.siga.base.util.Texto;
 import br.gov.jfrj.siga.cp.CpTipoConfiguracao;
 import br.gov.jfrj.siga.cp.CpTipoMarcadorEnum;
 import br.gov.jfrj.siga.cp.model.enm.CpMarcadorGrupoEnum;
@@ -89,6 +89,7 @@ import br.gov.jfrj.siga.ex.ExTipoMovimentacao;
 import br.gov.jfrj.siga.ex.ExTpDocPublicacao;
 import br.gov.jfrj.siga.ex.ExVia;
 import br.gov.jfrj.siga.ex.BIE.ExBoletimDoc;
+import br.gov.jfrj.siga.ex.bl.Ex;
 import br.gov.jfrj.siga.ex.bl.Mesa2.GrupoItem;
 import br.gov.jfrj.siga.ex.util.MascaraUtil;
 import br.gov.jfrj.siga.hibernate.ext.IExMobilDaoFiltro;
@@ -938,6 +939,38 @@ public class ExDao extends CpDao {
 			return null;
 		}
 	}
+	
+	public int consultarQtdeLotacaoModeloNomeExPreenchimento(ExPreenchimento exPreenchimento) {
+		try {
+			final Query query;
+			
+			query = em().createNamedQuery(
+					"consultarQtdeLotacaoModeloNomeExPreenchimento");
+			
+			if (exPreenchimento.getDpLotacao() != null)
+				query.setParameter("lotacao", exPreenchimento.getDpLotacao()
+						.getIdLotacao());
+			else
+				query.setParameter("lotacao", 0);
+			if (exPreenchimento.getExModelo() != null)
+				query.setParameter("modelo", exPreenchimento.getExModelo()
+						.getHisIdIni());
+			else
+				query.setParameter("modelo", 0);
+			
+			if(exPreenchimento.getNomePreenchimento() != null && !"".equals(exPreenchimento.getNomePreenchimento())) {
+				query.setParameter("nomePreenchimento", exPreenchimento.getNomePreenchimento());
+			} else {
+				query.setParameter("nomePreenchimento", exPreenchimento.getNomePreenchimento());
+			}
+			
+			final int l = ((Long) query.getSingleResult()).intValue();
+			
+			return l;
+		} catch (final NullPointerException e) {
+			return 0;
+		}
+	}
 
 	public List consultarAtivos() {
 		final Query query = em().createNamedQuery("consultarAtivos");
@@ -1784,6 +1817,7 @@ public class ExDao extends CpDao {
 		List<Predicate> whereList = new LinkedList<Predicate>();
 		if(flt.getSigla() != null) {
 			whereList.add(cb().like(c.get("nmMod").as(String.class), "%" + flt.getSigla() + "%"));
+			whereList.add(cb().equal(c.get("hisAtivo"), 1));
 		}
 		Predicate[] whereArray = new Predicate[whereList.size()];
 		whereList.toArray(whereArray);

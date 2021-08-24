@@ -15,7 +15,7 @@ import br.gov.infraero.siga.pen.client.model.FiltroDeEstruturas;
 import br.gov.infraero.siga.pen.client.model.IntegracaoPen;
 import br.gov.infraero.siga.pen.client.model.Paginacao;
 import br.gov.jfrj.siga.base.AplicacaoException;
-import br.gov.jfrj.siga.base.Texto;
+import br.gov.jfrj.siga.base.util.Texto;
 import br.gov.jfrj.siga.dp.CpOrgao;
 import br.gov.jfrj.siga.dp.CpOrgaoUsuario;
 import br.gov.jfrj.siga.dp.dao.CpDao;

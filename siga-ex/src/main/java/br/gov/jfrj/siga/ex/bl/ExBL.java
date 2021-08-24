@@ -65,7 +65,6 @@ import com.crivano.swaggerservlet.ISwaggerRequest;
 import com.crivano.swaggerservlet.ISwaggerResponse;
 import com.crivano.swaggerservlet.SwaggerAsyncResponse;
 import com.crivano.swaggerservlet.SwaggerCall;
-import com.google.common.base.Strings;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -91,9 +90,9 @@ import br.gov.jfrj.siga.base.Prop;
 import br.gov.jfrj.siga.base.RegraNegocioException;
 import br.gov.jfrj.siga.base.RequestInfo;
 import br.gov.jfrj.siga.base.SigaMessages;
-import br.gov.jfrj.siga.base.Texto;
 import br.gov.jfrj.siga.base.UsuarioDeSistemaEnum;
 import br.gov.jfrj.siga.base.util.SetUtils;
+import br.gov.jfrj.siga.base.util.Texto;
 import br.gov.jfrj.siga.base.util.Utils;
 import br.gov.jfrj.siga.bluc.service.BlucService;
 import br.gov.jfrj.siga.bluc.service.EnvelopeRequest;
@@ -1416,7 +1415,7 @@ public class ExBL extends CpBL {
 		if (doc.isCancelado())
 			throw new AplicacaoException("não é possível assinar um documento cancelado.");
 
-		if (Strings.isNullOrEmpty(doc.getDescrDocumento()))
+		if (Utils.empty(doc.getDescrDocumento()))
 			throw new AplicacaoException(
 					"Não é possível assinar o documento pois a descrição está vazia. Edite-o e informe uma descrição.");
 
@@ -2734,7 +2733,7 @@ public class ExBL extends CpBL {
 				throw new AplicacaoException("não é possível cancelar definição de perfil");
 
 		} else if (movCancelar.getIdTpMov() == ExTipoMovimentacao.TIPO_MOVIMENTACAO_MARCACAO) {
-			ExPodeCancelarMarcacao.afirmar(movCancelar, titularForm, lotaTitular);
+			ExPodeCancelarMarcacao.afirmar(movCancelar, titular, lotaTitular);
 		} else if (movCancelar.getIdTpMov() == ExTipoMovimentacao.TIPO_MOVIMENTACAO_REFERENCIA) {
 			if (!Ex.getInstance().getComp().podeCancelarVinculacaoDocumento(titular, lotaTitular, mob, movCancelar))
 				throw new AplicacaoException("não é possível cancelar vinculação de documento");
@@ -2935,7 +2934,7 @@ public class ExBL extends CpBL {
 	public String finalizar(final DpPessoa cadastrante, final DpLotacao lotaCadastrante, ExDocumento doc)
 			throws AplicacaoException {
 
-		if (doc.isFisico() && Strings.isNullOrEmpty(doc.getDescrDocumento()))
+		if (doc.isFisico() && Utils.empty(doc.getDescrDocumento()))
 			throw new AplicacaoException(
 					"Não é possível finalizar o documento pois a descrição está vazia. Edite-o e informe uma descrição.");
 
@@ -3869,7 +3868,7 @@ public class ExBL extends CpBL {
 			dao().gravar(movCancelada);
 		}
 
-		Notificador.notificarDestinariosEmail(mov, Notificador.TIPO_NOTIFICACAO_CANCELAMENTO);
+		Notificador.notificarDestinariosEmail(mov, mov.getExTipoMovimentacao().getId().equals(ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRANSFERENCIA) ? Notificador.TIPO_NOTIFICACAO_GRAVACAO : Notificador.TIPO_NOTIFICACAO_CANCELAMENTO);
 	}
 
 	public void excluirDocumentoAutomatico(final ExDocumento doc, DpPessoa titular, DpLotacao lotaTitular)
@@ -4846,7 +4845,15 @@ public class ExBL extends CpBL {
 					if (automatico)
 						mov.setDescrMov("Transferência automática.");
 
-					gravarMovimentacao(mov);
+					
+					// Cancelar trâmite pendente quando é para forçar para outro destino
+					ExMovimentacao movTramitePendente = m.getTramitePendente();
+					if (forcarTransferencia && movTramitePendente != null) {
+						gravarMovimentacaoCancelamento(mov, movTramitePendente);
+					} else {
+						gravarMovimentacao(mov);
+					}
+
 					concluirAlteracaoParcialComRecalculoAcesso(m);
 					
 					List<ExMovimentacao> listaMovimentacao = new ArrayList<ExMovimentacao>();
@@ -6570,7 +6577,6 @@ public class ExBL extends CpBL {
 
 	public void alterarExClassificacao(ExClassificacao exClassNovo, ExClassificacao exClassAntigo, Date dt,
 			CpIdentidade identidadeCadastrante) throws AplicacaoException {
-		verificarDuplicacaoTermoCompleto(exClassNovo, exClassAntigo);
 		try {
 			dao().gravarComHistorico(exClassNovo, exClassAntigo, dt, identidadeCadastrante);
 			copiarReferencias(exClassNovo, exClassAntigo, dt, identidadeCadastrante);
@@ -6716,7 +6722,6 @@ public class ExBL extends CpBL {
 
 	public void incluirExClassificacao(ExClassificacao exClass, CpIdentidade identidadeCadastrante)
 			throws AplicacaoException {
-		verificarDuplicacaoTermoCompleto(exClass, null);
 		dao().gravarComHistorico(exClass, null, dao().consultarDataEHoraDoServidor(), identidadeCadastrante);
 
 	}
