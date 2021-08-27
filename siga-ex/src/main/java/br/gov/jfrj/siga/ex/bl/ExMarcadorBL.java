@@ -169,7 +169,7 @@ public class ExMarcadorBL {
 			}
 
 			if(t == ExTipoMovimentacao.TIPO_MOVIMENTACAO_TRAMITE_RECEBIMENTO_PEN) {
-				acrescentarMarca(CpMarcador.MARCADOR_RECEBIDO_PEN, dt, mov.getSubscritor(), null);
+				m = CpMarcador.MARCADOR_RECEBIDO_PEN;
 			}
 
 			if (m != mAnterior) {
@@ -228,6 +228,8 @@ public class ExMarcadorBL {
 		} else if (m == CpMarcadorEnum.JUNTADO.getId() || m == CpMarcadorEnum.APENSADO.getId()) {
 			if (!mob.isEliminado())
 				acrescentarMarca(m, dt, null, null);
+		} else if (m == CpMarcador.MARCADOR_RECEBIDO_PEN) {
+			acrescentarMarca(m, dt, ultMovNaoCanc.getCadastrante(), ultMovNaoCanc.getLotaCadastrante());
 		} else if (m != 0L) {
 			// Edson: Os marcadores "Arq Corrente" e
 			// "Aguardando andamento" são mutuamente exclusivos

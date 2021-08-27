@@ -599,6 +599,16 @@ public class ReceberDocumentoPen extends ExController {
                 }
             }
 
+            if(doc.getExClassificacaoAtual() != null){
+                ExVia viaTemp = new ExVia();
+                if (doc.getExClassificacaoAtual().getExViaSet() == null) {
+                    doc.getExClassificacaoAtual().setExViaSet(new HashSet<>());
+                }
+                if(doc.getExClassificacaoAtual().getExViaSet().isEmpty()) {
+                    doc.getExClassificacaoAtual().getExViaSet().add(viaTemp);
+                }
+            }
+
             doc = Ex.getInstance()
                     .getBL().gravar(cadastrante, subscritor, subscritor.getLotacao(), doc);
 
