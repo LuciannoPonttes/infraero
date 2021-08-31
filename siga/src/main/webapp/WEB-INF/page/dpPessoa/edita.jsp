@@ -295,22 +295,22 @@
 							</div>
 						</div>
 					</div>
-				</div>
-				<div class="row">
-					<div class="col-md-2">
-						<div class="form-group">
-							<label for="idTipoPessoa">Tipo</label>
-							<select name="idTipoPessoa" value="${idTpPessoa}" class="form-control">
-								<c:forEach items="${listaTipoPessoa}" var="item">
-									<option value="${item.idTpPessoa}"
-										${item.idTpPessoa == idTpPessoa ? 'selected' : ''}>
-										${item.dscTpPessoa}</option>
-								</c:forEach>
-							</select>
+				
+					<div class="row">
+						<div class="col-md-2">
+							<div class="form-group">
+								<label for="idTipoPessoa">Tipo</label>
+								<select name="idTipoPessoa" value="${idTpPessoa}" class="form-control">
+									<c:forEach items="${listaTipoPessoa}" var="item">
+										<option value="${item.idTpPessoa}"
+											${item.idTpPessoa == idTpPessoa ? 'selected' : ''}>
+											${item.dscTpPessoa}</option>
+									</c:forEach>
+								</select>
+							</div>
 						</div>
 					</div>
-				</div>
-				<c:if test="${empty id}">
+					
 					<div class="row">
 						<div class="col-md-2">
 							<div class="form-group">
