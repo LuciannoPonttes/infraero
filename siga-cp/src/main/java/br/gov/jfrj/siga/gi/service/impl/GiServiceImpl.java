@@ -417,86 +417,7 @@ public class GiServiceImpl implements GiService {
 		}
 		return resultado;
 	}
-	
-	public String buscarPessoa(String nomePessoa, String siglaLotacao, Integer offset, Integer itemPagina){
-		if (nomePessoa != null){ 
-			nomePessoa = nomePessoa.toUpperCase();
-		}
-		
-		String retorno = "";
-		
-		try {
-			
-			CpDao dao = CpDao.getInstance();
 
-			final DpPessoaDaoFiltro flt = createFiltroPessoa(nomePessoa, siglaLotacao);
-			List<DpPessoa> itens = dao.consultarPorFiltro(flt, offset, itemPagina);
-			JSONArray pArray = new JSONArray();
-			for(DpPessoa pessoa : itens){
-				JSONObject p = new JSONObject();
-				p.put("nome", pessoa.getNomePessoa());
-				p.put("sigla", pessoa.getSigla());
-				p.put("id", pessoa.getId());
-				pArray.put(p);
-			}
-			
-			retorno = pArray.toString();
-			
-		}catch (Exception e) {
-			return "";
-		}
-
-		return retorno;
-	}
-	
-	private DpPessoaDaoFiltro createFiltroPessoa(String nomePessoa, String siglaLotacao) {
-		final DpPessoaDaoFiltro flt = new DpPessoaDaoFiltro();
-		flt.setNome(Texto.removeAcentoMaiusculas(nomePessoa));
-		if(siglaLotacao != null && !siglaLotacao.equals("")){
-			CpDao dao = CpDao.getInstance();
-			DpLotacao dpLotacao = new DpLotacao();
-			dpLotacao.setSigla(siglaLotacao);
-			DpLotacao lotacao = dao.consultarPorSigla(dpLotacao);
-			flt.setLotacao(lotacao);
-		}
-		
-		return flt;
-	}
-
-	@Override
-	public String buscarLotacao(String nomeLotacao, Integer offset, Integer itemPagina){
-		if (nomeLotacao != null){ 
-			nomeLotacao = nomeLotacao.toUpperCase();
-		}
-		
-		String retorno = "";
-		
-		try {
-			
-			CpDao dao = CpDao.getInstance();
-			
-			final DpLotacaoDaoFiltro flt = new DpLotacaoDaoFiltro();
-			flt.setNome(Texto.removeAcentoMaiusculas(nomeLotacao));
-			
-			List<DpLotacao> itens = dao.consultarPorFiltro(flt, offset, itemPagina);
-			JSONArray lArray = new JSONArray();
-			for(DpLotacao lotacao : itens){
-				JSONObject l = new JSONObject();
-				l.put("nome", lotacao.getNomeLotacao());
-				l.put("sigla", lotacao.getSigla());
-				l.put("id", lotacao.getId());
-				lArray.put(l);
-			}
-
-			retorno = lArray.toString();
-			
-		}catch (Exception e) {
-			return "";
-		}
-
-		return retorno;
-	}
-	
 	@Override
 	public String esqueciSenha(String cpf, String email) {
 		String resultado = "";
@@ -654,5 +575,77 @@ public class GiServiceImpl implements GiService {
 						
 		return token;
 	}
-	
+
+	@Override
+	public String buscarPessoa(String nomePessoa, String siglaLotacao, Integer offset, Integer itemPagina){
+		if (nomePessoa != null){
+			nomePessoa = nomePessoa.toUpperCase();
+		}
+
+		String retorno = "";
+
+		try {
+			CpDao dao = CpDao.getInstance();
+			final DpPessoaDaoFiltro flt = createFiltroPessoa(nomePessoa, siglaLotacao);
+			List<DpPessoa> itens = dao.consultarPorFiltro(flt, offset, itemPagina);
+			JSONArray pArray = new JSONArray();
+			for(DpPessoa pessoa : itens){
+				JSONObject p = new JSONObject();
+				p.put("nome", pessoa.getNomePessoa());
+				p.put("sigla", pessoa.getSigla());
+				p.put("id", pessoa.getId());
+				pArray.put(p);
+			}
+
+			retorno = pArray.toString();
+
+		}catch (Exception e) {
+			return "";
+		}
+		return retorno;
+	}
+
+	private DpPessoaDaoFiltro createFiltroPessoa(String nomePessoa, String siglaLotacao) {
+		final DpPessoaDaoFiltro flt = new DpPessoaDaoFiltro();
+		flt.setNome(Texto.removeAcentoMaiusculas(nomePessoa));
+		if(siglaLotacao != null && !siglaLotacao.equals("")){
+			CpDao dao = CpDao.getInstance();
+			DpLotacao dpLotacao = new DpLotacao();
+			dpLotacao.setSigla(siglaLotacao);
+			DpLotacao lotacao = dao.consultarPorSigla(dpLotacao);
+			flt.setLotacao(lotacao);
+		}
+		return flt;
+	}
+
+	@Override
+	public String buscarLotacao(String nomeLotacao, Integer offset, Integer itemPagina){
+		if (nomeLotacao != null){
+			nomeLotacao = nomeLotacao.toUpperCase();
+		}
+		String retorno = "";
+		try {
+
+			CpDao dao = CpDao.getInstance();
+
+			final DpLotacaoDaoFiltro flt = new DpLotacaoDaoFiltro();
+			flt.setNome(Texto.removeAcentoMaiusculas(nomeLotacao));
+
+			List<DpLotacao> itens = dao.consultarPorFiltro(flt, offset, itemPagina);
+			JSONArray lArray = new JSONArray();
+			for(DpLotacao lotacao : itens){
+				JSONObject l = new JSONObject();
+				l.put("nome", lotacao.getNomeLotacao());
+				l.put("sigla", lotacao.getSigla());
+				l.put("id", lotacao.getId());
+				lArray.put(l);
+			}
+			retorno = lArray.toString();
+
+		}catch (Exception e) {
+			return "";
+		}
+		return retorno;
+	}
+
 }
