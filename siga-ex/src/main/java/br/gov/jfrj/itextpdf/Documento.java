@@ -511,7 +511,7 @@ public class Documento {
 		sHtml = (new ProcessadorHtml()).canonicalizarHtml(sHtml, true, false,
 				true, false, true);
 		
-		sHtml = incluirLinkNasAssinaturas(sHtml);
+		//sHtml = incluirLinkNasAssinaturas(sHtml);
 
 		sHtml = sHtml.replace("contextpath", realPath());
 		

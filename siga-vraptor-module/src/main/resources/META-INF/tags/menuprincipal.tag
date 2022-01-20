@@ -453,7 +453,7 @@
 								target="_blank">Manual</a>
 					</c:if>
 				</c:when>
-				<c:when test="${f:resource('siga.local') eq 'INFRAERO'}">
+				<c:when test="${f:resource('/siga.local') eq 'INFRAERO'}">
 					<a class="dropdown-item" id="apostilaSiga"
 						href="/siga/arquivos/MANUAL_SIGA_DOC_USUARIO.pdf"
 						target="_blank">Manual SIGA-Doc</a>
