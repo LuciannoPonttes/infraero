@@ -606,5 +606,5 @@ updateURL = function() {
 	var descrFields = document.getElementsByName('exDocumentoDTO.descrDocumento');
 	var descr = descrFields && descrFields[0].value ? '&descr=' + descrFields[0].value : '';
 	
-	history.replaceState(null, null, 'editar?modelo=' + modelo + lotaDest + classif + descr);
+	history.replaceState(null, null, 'editar?modelo=' + modelo + lotaDest + classif + descr.replaceAll('<','%3C').replaceAll('>','%3E').replaceAll('/','%2F'));
 }

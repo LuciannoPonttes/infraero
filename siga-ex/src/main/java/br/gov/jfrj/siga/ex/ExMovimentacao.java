@@ -1067,12 +1067,12 @@ public class ExMovimentacao extends AbstractExMovimentacao implements
 		String assinantesSenha = getAssinantesComSenhaString(getData());
 		String retorno = "";
 		retorno += assinantesToken.length() > 0 ? "Assinado digitalmente por "
-				+ assinantesToken + " em "+ new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(getDtIniMov()) + ".\n" : "";
+				+ assinantesToken + ".\n" : "";
 		retorno += assinantesSenha.length() > 0 ? "Assinado com senha por "
-				+ assinantesSenha + " em "+ new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(getDtIniMov()) + ".\n" : "";
+				+ assinantesSenha + ".\n" : "";
 
 		retorno += conferentes.length() > 0 ? "Autenticado digitalmente por "
-				+ conferentes + " em "+ new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(getDtIniMov()) + ".\n" : "";
+				+ conferentes + ".\n" : "";
 
 		return retorno;
 	}

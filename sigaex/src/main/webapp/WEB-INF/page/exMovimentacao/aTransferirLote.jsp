@@ -113,7 +113,7 @@
 									name="dtDevolucaoMovString"
 									onblur="javascript:verifica_data(this,0);"
 									value="${dtDevolucaoMovString}" class="form-control" /> <small
-									class="form-text text-muted">Atenção: somente preencher
+									class="form-text text-muted text-uppercase font-weight-bold" style="color: red !important;">Atenção: somente preencher
 									a data de devolução se a intenção for, realmente, que o
 									documento seja devolvido até esta data.</small>
 							</div>

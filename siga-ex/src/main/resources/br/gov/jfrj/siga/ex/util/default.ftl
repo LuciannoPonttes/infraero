@@ -1368,6 +1368,7 @@ CKEDITOR.replace( '${var}',
                         [#else]
                             <script type="text/javascript">
 
+								CKEDITOR.config.language = 'pt-br';
 								CKEDITOR.config.disableNativeSpellChecker = false;
 								CKEDITOR.config.scayt_autoStartup = false;
 								CKEDITOR.config.scayt_sLang = 'pt_BR';

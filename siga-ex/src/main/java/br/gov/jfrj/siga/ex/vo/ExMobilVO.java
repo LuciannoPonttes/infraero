@@ -390,13 +390,13 @@ public class ExMobilVO extends ExVO {
 						.podeDesapensar(titular, lotaTitular, mob), null, null,
 				null, null, "once");
 
-/*		addAcao("email_open",
+		addAcao("email_open",
 				"Receber",
 				"/app/expediente/mov",
 				"receber",
 				Ex.getInstance().getComp()
 						.podeReceber(titular, lotaTitular, mob), null, null,
-				null, null, "once");*/
+				null, null, "once");
 		
 		addAcao("email_go",
 				"_Tramitar",

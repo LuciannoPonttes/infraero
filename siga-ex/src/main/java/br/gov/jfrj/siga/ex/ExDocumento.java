@@ -1995,18 +1995,18 @@ public class ExDocumento extends AbstractExDocumento implements Serializable,
 		}
 		
 		if (assinantesToken.length() > 0)
-			retorno = "Assinado digitalmente por " + assinantesToken + " em "+ new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(getDtAssinatura()) + ".\n";
+			retorno = "Assinado digitalmente por " + assinantesToken + ".\n";
 		
 		if (assinantesSenha.length() > 0)
-			retorno = retorno + "Assinado com senha por " + assinantesSenha + " em "+ new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(getDtAssinatura()) + ".\n";
+			retorno = retorno + "Assinado com senha por " + assinantesSenha + ".\n";
 		
 		if (conferentes.length() > 0)
 			retorno += conferentes.length() > 0 ? "Autenticado digitalmente por "
-				+ conferentes + " em "+ new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(getDtAssinatura()) + ".\n" : "";
+					+ conferentes + ".\n" : "";
 		
 		if (conferentesSenha.length() > 0)
 			retorno += conferentesSenha.length() > 0 ? "Autenticado com senha por "
-				+ conferentesSenha + " em "+ new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(getDtAssinatura()) + ".\n" : "";
+					+ conferentesSenha + ".\n" : "";
 			
 		return retorno;
 	}

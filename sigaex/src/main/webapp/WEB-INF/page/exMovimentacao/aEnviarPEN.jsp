@@ -171,7 +171,7 @@ $(function(){
 				</div>				
 				<div class="row">
 					<div class="col col-12">
-							<small class="form-text text-muted">Atenção: somente preencher a data de devolução se a intenção for, realmente, que o documento seja devolvido até esta data.</small>
+							<small class="form-text text-muted text-uppercase font-weight-bold" style="color: red !important;">Atenção: somente preencher a data de devolução se a intenção for, realmente, que o documento seja devolvido até esta data.</small>
 					</div>				
 				</div>				
 				<div class="row">
