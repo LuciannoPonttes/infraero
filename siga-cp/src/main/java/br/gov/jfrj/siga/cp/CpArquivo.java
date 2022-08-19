@@ -53,7 +53,7 @@ import org.jboss.logging.Logger;
 
 import br.gov.jfrj.siga.base.Prop;
 import br.gov.jfrj.siga.base.util.Texto;
-import br.gov.jfrj.siga.cp.arquivo.ArmazenamentoHCP;
+import br.gov.jfrj.siga.cp.arquivo.*;
 import br.gov.jfrj.siga.dp.CpOrgaoUsuario;
 import br.gov.jfrj.siga.dp.dao.CpDao;
 import br.gov.jfrj.siga.model.ContextoPersistencia;
@@ -143,6 +143,11 @@ public class CpArquivo implements Serializable, PersistentAttributeInterceptable
 			ArmazenamentoHCP a = ArmazenamentoHCP.getInstance();
 			a.salvar(this, this.getConteudo());
 			break;
+		case S3:
+			gerarCaminho();
+			ArmazenamentoS3 s3 = ArmazenamentoS3.getInstance();
+			s3.salvar(this, this.getConteudo());
+			break;
 		default:
 			break;
 		}
@@ -162,6 +167,7 @@ public class CpArquivo implements Serializable, PersistentAttributeInterceptable
 	private void removerArquivo() {
 		switch (getTipoArmazenamento()) {
 		case HCP:
+		case S3:
 			if (getCaminho() != null) {
 				CpArquivoExcluir excluir = new CpArquivoExcluir();
 				excluir.setIdArqExc(getIdArq());
@@ -202,6 +208,10 @@ public class CpArquivo implements Serializable, PersistentAttributeInterceptable
 		case HCP:
 			ArmazenamentoHCP a = ArmazenamentoHCP.getInstance();
 			cacheArquivo = a.recuperar(this);
+			break;
+		case S3:
+			ArmazenamentoS3 s3 = ArmazenamentoS3.getInstance();
+			cacheArquivo = s3.recuperar(this);
 			break;
 		default:
 			break;
@@ -251,7 +261,6 @@ public class CpArquivo implements Serializable, PersistentAttributeInterceptable
 			extensao = TipoConteudo.ZIP.getExtensao();
 
 		Calendar c = Calendar.getInstance();
-		c.set(Calendar.AM_PM, Calendar.PM);
 		this.caminho = c.get(Calendar.YEAR) + "/" + (c.get(Calendar.MONTH) + 1) + "/" + c.get(Calendar.DATE) + "/"
 				+ c.get(Calendar.HOUR_OF_DAY) + "/" + c.get(Calendar.MINUTE) + "/" + UUID.randomUUID().toString() + "."
 				+ extensao;
