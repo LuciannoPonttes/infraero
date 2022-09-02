@@ -13,6 +13,7 @@ RUN sh -c "ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/tim
 
 USER jboss
 ADD modulos/sigadoc ${JBOSS_HOME}/modules/sigadoc
+ADD modulos/com ${JBOSS_HOME}/modules/com
 
 #--- APLICACÕES WEB (siga) ---
 COPY --chown=jboss:nogroup target/siga.war target/sigaex.war ${JBOSS_HOME}/standalone/deployments/

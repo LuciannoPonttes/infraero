@@ -92,3 +92,15 @@ sigasr/.tern-project
 # Sphinx documentation
 docs/_build/
 resultado.txt
+
+#lixo em geral
+.vs
+Empresa Brasileira de Infraestrutura Aeroportu*
+Jenkinsfile
+*.txt
+*.sh
+diff.txt
+*.docx
+kubernetes/
+modulos/
+*.tmp
