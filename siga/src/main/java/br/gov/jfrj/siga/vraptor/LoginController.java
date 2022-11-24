@@ -126,7 +126,7 @@ public class LoginController extends SigaController {
 					
 			
 		} catch (Exception e) {
-			result.include("loginMensagem", e.getMessage()); // aqui adicionar tente com a senha de rede windows 
+			result.include("loginMensagem", SigaMessages.getMessage("usuario.falhaautenticacao")); // aqui adicionar tente com a senha de rede windows 
 			result.forwardTo(this).login(cont);
 		}
 	}

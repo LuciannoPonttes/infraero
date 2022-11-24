@@ -7806,6 +7806,7 @@ public class ExBL extends CpBL {
 					lotaCadastrante, mob, dtMov, null, null, null, null, dtMov);
 
 			mov.setDescrMov(descrMov);
+			mov.setConteudoTpMov("application/zip");
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			Documento.getDocumento(baos, null, mob, null, true, true, false, null, null);
 			byte[] ab = baos.toByteArray();
