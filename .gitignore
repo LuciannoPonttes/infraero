@@ -102,5 +102,4 @@ Jenkinsfile
 diff.txt
 *.docx
 kubernetes/
-modulos/
 *.tmp
