@@ -24,6 +24,8 @@ public interface IMontadorQuery {
 
 	public abstract String montaQueryConsultaporFiltro(
 			final IExMobilDaoFiltro flt, boolean apenasCount);
+	
+	
 
 	public abstract void setMontadorPrincipal(IMontadorQuery montadorQueryPrincipal);
 }

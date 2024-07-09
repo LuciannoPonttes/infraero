@@ -84,6 +84,9 @@ import br.gov.jfrj.siga.ex.BIE.ExBoletimDoc;
 				+ "			where org.idOrgaoUsu = :idOrgaoUsu"
 				+ "			and frm.idFormaDoc = :idFormaDoc"
 				+ "			and doc.anoEmissao = :anoEmissao"),
+		@NamedQuery(name = "obterProximoNumeroNup", query = "select max(doc.numNup)+1"
+				+ "			from ExDocumento doc"
+				+ "			where doc.anoEmissao = :anoEmissao"),
 		@NamedQuery(name = "consultarPorSiglaDocumento", query = "from ExDocumento doc"
 				+ "		where ("
 				+ "		doc.anoEmissao=:anoEmissao"
@@ -239,6 +242,33 @@ public abstract class AbstractExDocumento extends ExArquivo implements
 	@Column(name = "ID_DOC")
 	private java.lang.Long idDoc;
 	
+	
+	@SequenceGenerator(sequenceName = "EX_DOCUMENTO_SEQ", name = "EX_DOCUMENTO_SEQ")
+	@GeneratedValue(generator = "EX_DOCUMENTO_SEQ")
+	@Column(name = "NUM_NUP")
+	private java.lang.Long numNup;
+	
+	@Column(name = "NUP")
+	private String nup;
+	
+	
+
+	public String getNup() {
+		return nup;
+	}
+
+	public void setNup(String nup) {
+		this.nup = nup;
+	}
+
+	public java.lang.Long getNumNup() {
+		return numNup;
+	}
+
+	public void setNumNup(java.lang.Long numNup) {
+		this.numNup = numNup;
+	}
+
 	@Transient
 	protected byte[] cacheConteudoBlobDoc;
 

@@ -1638,6 +1638,7 @@ public class ExDocumentoController extends ExController {
 		exDocumentoDto.setSigla(sigla);
 
 		buscarDocumento(true, exDocumentoDto);
+		
 
 		verificaDocumento(exDocumentoDto.getDoc());
 

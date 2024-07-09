@@ -102,6 +102,8 @@ public class ExMobilDaoFiltro extends DaoFiltroSelecionavel implements
 	private String nmSubscritorExt;
 
 	private Long numExpediente;
+	
+	private String nup;
 
 	private String numExtDoc;
 
@@ -381,6 +383,7 @@ public class ExMobilDaoFiltro extends DaoFiltroSelecionavel implements
 	public void setIdMod(Long idMod) {
 		this.idMod = idMod;
 	}
+	
 
 	public boolean buscarPorCamposMarca() {
 		return (getUltMovIdEstadoDoc() != null && getUltMovIdEstadoDoc() != 0)
@@ -415,5 +418,16 @@ public class ExMobilDaoFiltro extends DaoFiltroSelecionavel implements
 				|| (getIdOrgaoUsu() != null && getIdOrgaoUsu() != 0)
 				|| (getAnoEmissao() != null && getAnoEmissao() != 0)
 				|| (getNumExpediente() != null && getNumExpediente() != 0);
+	}
+
+	
+	public String getNup() {
+		return this.nup;
+	}
+
+	
+	public void setNup(String nup) {
+		this.nup = nup;
+		
 	}
 }

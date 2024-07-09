@@ -257,7 +257,7 @@ public class ExMobilController extends
 			final Integer tipoCadastrante, final DpPessoaSelecao cadastranteSel, final DpLotacaoSelecao lotaCadastranteSel, final Integer tipoDestinatario,
 			final DpPessoaSelecao destinatarioSel, final DpLotacaoSelecao lotacaoDestinatarioSel, final CpOrgaoSelecao orgaoExternoDestinatarioSel,
 			final String nmDestinatario, final ExClassificacaoSelecao classificacaoSel, final String descrDocumento, final String fullText,
-			final Long ultMovEstadoDoc, final Integer paramoffset) throws UnsupportedEncodingException {
+			final Long ultMovEstadoDoc, final Integer paramoffset, final String nup) throws UnsupportedEncodingException {
 			
 		
 		final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -412,7 +412,7 @@ public class ExMobilController extends
 
 		} catch (final RegraNegocioException e) {
 			result.include(SigaModal.ALERTA, SigaModal.mensagem(e.getMessage()));
-			result.forwardTo(this).aListar(popup, primeiraVez, propriedade, postback, apenasRefresh, ultMovIdEstadoDoc, ordem, visualizacao, ultMovTipoResp, ultMovRespSel, ultMovLotaRespSel, orgaoUsu, idTpDoc, dtDocString, dtDocFinalString, idTipoFormaDoc, idFormaDoc, idMod, anoEmissaoString, numExpediente, numExtDoc, cpOrgaoSel, numAntigoDoc, subscritorSel, nmSubscritorExt, tipoCadastrante, cadastranteSel, lotaCadastranteSel, tipoDestinatario, destinatarioSel, lotacaoDestinatarioSel, orgaoExternoDestinatarioSel, nmDestinatario, classificacaoSel, descrDocumento, fullText, ultMovEstadoDoc, paramoffset);
+			result.forwardTo(this).aListar(popup, primeiraVez, propriedade, postback, apenasRefresh, ultMovIdEstadoDoc, ordem, visualizacao, ultMovTipoResp, ultMovRespSel, ultMovLotaRespSel, orgaoUsu, idTpDoc, dtDocString, dtDocFinalString, idTipoFormaDoc, idFormaDoc, idMod, anoEmissaoString, numExpediente, numExtDoc, cpOrgaoSel, numAntigoDoc, subscritorSel, nmSubscritorExt, tipoCadastrante, cadastranteSel, lotaCadastranteSel, tipoDestinatario, destinatarioSel, lotacaoDestinatarioSel, orgaoExternoDestinatarioSel, nmDestinatario, classificacaoSel, descrDocumento, fullText, ultMovEstadoDoc, paramoffset, nup);
 		}
 		return null;	
 	}
@@ -426,7 +426,7 @@ public class ExMobilController extends
 			final Integer tipoCadastrante, final DpPessoaSelecao cadastranteSel, final DpLotacaoSelecao lotaCadastranteSel, final Integer tipoDestinatario,
 			final DpPessoaSelecao destinatarioSel, final DpLotacaoSelecao lotacaoDestinatarioSel, final CpOrgaoSelecao orgaoExternoDestinatarioSel,
 			final String nmDestinatario, final ExClassificacaoSelecao classificacaoSel, final String descrDocumento, final String fullText,
-			final Long ultMovEstadoDoc, final Integer paramoffset) {
+			final Long ultMovEstadoDoc, final Integer paramoffset,final String nup) {
 		assertAcesso("");
 
 		getP().setOffset(paramoffset);
@@ -515,6 +515,7 @@ public class ExMobilController extends
 		result.include("idTipoFormaDoc", idTipoFormaDoc);
 		result.include("idFormaDoc", idFormaDoc);
 		result.include("idMod", idMod);		
+		result.include("nup", nup);	
 
 		if (visualizacao == 3 || visualizacao == 4) {
 			TreeMap campos = new TreeMap<String, String>();
@@ -698,6 +699,7 @@ public class ExMobilController extends
 		}
 		flt.setNmSubscritorExt(param("nmSubscritorExt"));
 		flt.setNumExpediente(paramLong("numExpediente"));
+		flt.setNup(param("nup"));
 		flt.setNumExtDoc(param("numExtDoc"));
 		flt.setNumAntigoDoc(param("numAntigoDoc"));
 		flt.setOrgaoExternoSelId(paramLong("cpOrgaoSel.id"));

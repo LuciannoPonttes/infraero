@@ -561,6 +561,11 @@
 								<label for="numExpediente">Número</label>
 							    <input type="text" size="7" name="numExpediente" value="${numExpediente}" maxlength="6" class="form-control" />
 							</div>
+							
+							<div class="form-group col-md-3">
+								<label for="nup">Nup</label>
+							  <input type="text"  name="nup" value="${nup}" maxlength="20" oninput="formatarCNPJ(this)" class="form-control" />
+							</div>
 					</div>
 					<div class="form-row">
 						<div class="form-group col-md-3" id="trNumOrigDoc"
@@ -742,5 +747,13 @@
 	<script type="text/javascript" src="/siga/javascript/select2/select2.min.js"></script>
 	<script type="text/javascript" src="/siga/javascript/select2/i18n/pt-BR.js"></script>
 	<script type="text/javascript" src="/siga/javascript/siga.select2.js"></script>
+	<script>
+		function formatarCNPJ(campo) {
+		    campo.value = campo.value.replace(/\D/g, ''); // Remove tudo que não for dígito
+		    campo.value = campo.value.replace(/^(\d{5})(\d)/, '$1.$2'); // Coloca ponto após os primeiros 5 dígitos
+		    campo.value = campo.value.replace(/^(\d{5})\.(\d{6})(\d)/, '$1.$2/$3'); // Coloca barra após os próximos 6 dígitos
+		    campo.value = campo.value.replace(/^(\d{5})\.(\d{6})\/(\d{4})(\d)/, '$1.$2/$3-$4'); // Coloca hífen após os próximos 4 dígitos
+		}
+	</script>
 
 </siga:pagina>

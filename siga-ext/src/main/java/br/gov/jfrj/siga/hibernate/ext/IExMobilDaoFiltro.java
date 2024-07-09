@@ -43,6 +43,9 @@ public interface IExMobilDaoFiltro {
 	public abstract String getNmSubscritorExt();
 
 	public abstract Long getNumExpediente();
+	
+	
+	public String getNup();
 
 	public abstract String getNumExtDoc();
 
@@ -80,6 +83,8 @@ public interface IExMobilDaoFiltro {
 	public abstract void setNmSubscritorExt(final String nmSubscritorExt);
 
 	public abstract void setNumExpediente(final Long numExpediente);
+	
+	public abstract void setNup(final String nup);
 
 	public abstract void setNumExtDoc(final String numExtDoc);
 

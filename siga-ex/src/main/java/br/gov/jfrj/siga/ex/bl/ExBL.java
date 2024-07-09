@@ -3014,6 +3014,9 @@ public class ExBL extends CpBL {
 			} else {
 				if (doc.getNumExpediente() == null)
 					doc.setNumExpediente(obterProximoNumero(doc));
+				if(doc.getNup() == null && doc.getNumNup() == null)
+					doc.setNumNup(obterProximoNumeroNup(doc));
+					doc.setNup(gerarNupCompleto(doc.getNumNup().toString(), doc.getAnoEmissao().toString()));
 			}
 
 			doc.setDtFinalizacao(dt);
@@ -3091,6 +3094,36 @@ public class ExBL extends CpBL {
 
 		return num;
 	}
+	
+	public Long obterProximoNumeroNup(ExDocumento doc) throws Exception {
+		doc.setAnoEmissao(Long.valueOf(new Date().getYear()) + 1900);
+
+		Long num = dao().obterProximoNumeroNup(doc, doc.getAnoEmissao());
+
+		if (num == null) {
+			// Verifica se reiniciar a numeração ou continua com a numeração
+			// anterior
+			if (getComp().podeReiniciarNumeracao(doc)) {
+				num = 1L;
+			} else {
+				// Obtém o próximo número considerando os anos anteriores até
+				// 2006
+				Long anoEmissao = doc.getAnoEmissao();
+				while (num == null && anoEmissao > 2005) {
+					anoEmissao = anoEmissao - 1;
+					num = dao().obterProximoNumero(doc, anoEmissao);
+				}
+				// Se continuar null é porque nunca foi criado documento para
+				// este formato.
+				if (num == null)
+					num = 1L;
+			}
+		}
+
+		return num;
+	}
+	
+	
 
 	public Long obterNumeroDocumento(ExDocumento doc) throws Exception {
 		// Obtém Número definitivo de documento de acordo com órgão/forma/ano via WS
@@ -7822,6 +7855,174 @@ public class ExBL extends CpBL {
 			throw new RuntimeException("Erro ao gravar movimentação.", e);
 		}
 	}
+	
+	public String gerarNupCompleto(String seq, String ano) {
+	
+			
+	
+			if (seq.length() < 6) {
+	
+			    seq = String.format("%06d", Integer.parseInt(seq));
+	
+			}
+	
+			 String mascara = "00000.000000/0000-00";
+	
+			String resultadoNup = null;
+	
+			String nup = "99927" + seq + ano;
+	
+			
+	
+			String resultado = null;
+	
+	
+	
+			String x = nup.replaceAll("[./-]", "");
+	
+	
+	
+			int tamanhoNUP = x.length();
+	
+	
+	
+			if (!x.matches("[0-9]+") || tamanhoNUP != 15) {
+	
+				System.out.println("Entrada inválida. Digite o NUP com 15 dígitos para cálculo do DV");
+	
+			} else {
+	
+	
+	
+				int j = 2;
+	
+				int soma = 0;
+	
+				for (int i = x.length() - 1; i >= 0; i--) {
+	
+					int posicao = Character.getNumericValue(x.charAt(i));
+	
+					soma += j * posicao;
+	
+					j++;
+	
+				}
+	
+	
+	
+				int resto = soma % 11;
+	
+				resto = 11 - resto;
+	
+				if (resto > 9) {
+	
+					resto = resto - 10;
+	
+				}
+	
+				int primeiroDV = resto;
+	
+	
+	
+				x = x + primeiroDV;
+	
+	
+	
+				soma = 0;
+	
+				j = 2;
+	
+				for (int i = x.length() - 1; i >= 0; i--) {
+	
+					int posicao = Character.getNumericValue(x.charAt(i));
+	
+					soma += j * posicao;
+	
+					j++;
+	
+				}
+	
+	
+	
+				resto = soma % 11;
+	
+				resto = 11 - resto;
+	
+				if (resto > 9) {
+	
+					resto = resto - 10;
+	
+				}
+	
+				int segundoDV = resto;
+	
+	
+	
+				resultado =   String.valueOf(primeiroDV) + String.valueOf(segundoDV);
+	
+				resultadoNup = nup + resultado;
+	
+				
+	
+	
+	
+			}
+	
+			
+	
+			return formatarComMascara(resultadoNup, mascara);
+	
+		}
+	
+		
+	
+		public String formatarComMascara(String texto, String mascara) {
+	
+	        int indiceTexto = 0;
+	
+	        StringBuilder resultado = new StringBuilder();
+	
+	
+	
+	        
+	
+	        for (int i = 0; i < mascara.length(); i++) {
+	
+	            
+	
+	            if (mascara.charAt(i) == '0') {
+	
+	                if (indiceTexto < texto.length()) {
+	
+	                    resultado.append(texto.charAt(indiceTexto));
+	
+	                    indiceTexto++;
+	
+	                } else {
+	
+	                   
+	
+	                    resultado.append('0');  // ou outro caractere opcional
+	
+	                }
+	
+	            } else {
+	
+	               
+	
+	                resultado.append(mascara.charAt(i));
+	
+	            }
+	
+	        }
+	
+	
+	        return resultado.toString();
+	
+	    }
+		
+		
+	
 
 
 

@@ -109,6 +109,18 @@ public class ExDocumentoDTO {
 	private InputStream PdfStreamResult;
 
 	private Long id;
+	
+	private Long num_nup;
+	
+	private String nup;
+
+	public String getNup() {
+		return nup;
+	}
+
+	public void setNup(String nup) {
+		this.nup = nup;
+	}
 
 	/** The composite primary key value. */
 	private String idDoc;
@@ -308,6 +320,14 @@ public class ExDocumentoDTO {
 
 	public void setEletronicoFixo(boolean eletronicoFixo) {
 		this.eletronicoFixo = eletronicoFixo;
+	}
+
+	public Long getNum_nup() {
+		return num_nup;
+	}
+
+	public void setNum_nup(Long num_nup) {
+		this.num_nup = num_nup;
 	}
 
 	public Long getNivelAcesso() {

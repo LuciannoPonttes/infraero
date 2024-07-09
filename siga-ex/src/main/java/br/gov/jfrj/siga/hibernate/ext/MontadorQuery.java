@@ -73,7 +73,8 @@ public class MontadorQuery implements IMontadorQuery {
 		if (flt.getNumExpediente() != null && flt.getNumExpediente() != 0) {
 			sbf.append(" and doc.numExpediente = :numExpediente");
 		}
-
+		
+		
 		if (flt.getIdTpDoc() != null && flt.getIdTpDoc() != 0) {
 			sbf.append(" and doc.exTipoDocumento.idTpDoc = :idTpDoc");
 		}
@@ -205,4 +206,6 @@ public class MontadorQuery implements IMontadorQuery {
 		// Este médodo não faz nada. É utilizado apenas para a extensão da busca
 		// textual do SIGA.
 	}
+
+	
 }
